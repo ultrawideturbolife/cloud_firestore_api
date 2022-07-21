@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:feedback_response/feedback_response.dart';
 
 import '../data/models/feedback_config.dart';
