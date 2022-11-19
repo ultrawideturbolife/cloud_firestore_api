@@ -1,3 +1,7 @@
+## 0.0.1+4
+
+* Update example project and other small changes.
+
 ## 0.0.1+3
 
 * Remove unused import.

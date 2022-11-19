@@ -9,10 +9,10 @@ import 'package:cloud_firestore_api/data/enums/search_term_type.dart';
 import 'package:cloud_firestore_api/data/enums/timestamp_type.dart';
 import 'package:cloud_firestore_api/data/models/write_batch_with_reference.dart';
 
-import '../abstracts/writeable.dart';
-import '../data/models/feedback_config.dart';
+import 'package:cloud_firestore_api/abstracts/writeable.dart';
+import 'package:cloud_firestore_api/data/models/feedback_config.dart';
 
-part '../../data/extensions/extensions.dart';
+part 'package:cloud_firestore_api/data/extensions/extensions.dart';
 
 typedef FirestoreQuery<T> = Query<T> Function(
     CollectionReference<T> collectionReference);
@@ -42,8 +42,8 @@ class FirestoreAPI<T extends Object> {
   FirestoreAPI({
     required FirebaseFirestore firebaseFirestore,
     required String collectionPath,
-    Map<String, dynamic> Function<T>(T value)? toJson,
-    T Function<T>(Map<String, dynamic> json)? fromJson,
+    Map<String, dynamic> Function(T value)? toJson,
+    T Function(Map<String, dynamic> json)? fromJson,
     bool tryAddLocalId = false,
     FeedbackConfig feedbackConfig = const FeedbackConfig(),
     FirestoreLogger firestoreLogger = const FirestoreDefaultLogger(),
@@ -68,10 +68,10 @@ class FirestoreAPI<T extends Object> {
   final String _collectionPath;
 
   /// Used to serialize your data to JSON when using 'WithConverter' methods.
-  final Map<String, dynamic> Function<T>(T value)? _toJson;
+  final Map<String, dynamic> Function(T value)? _toJson;
 
   /// Used to deserialize your data to JSON when using 'WithConverter' methods.
-  final T Function<T>(Map<String, dynamic> json)? _fromJson;
+  final T Function(Map<String, dynamic> json)? _fromJson;
 
   /// Used to add an id field to any of your local Firestore data (so not actually in Firestore).
   ///
@@ -167,7 +167,7 @@ class FirestoreAPI<T extends Object> {
       }
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to find $_collectionPath with converter and id: $id.',
+        '🔥 Unable to find $_collectionPath document with converter and id: $id.',
         error: error,
         stackTrace: stackTrace,
       );
@@ -526,7 +526,7 @@ class FirestoreAPI<T extends Object> {
         _log.success('🔥 Writeable is valid!');
         _log.info(
           '🔥 '
-          'Creating $_collectionPath with '
+          'Creating $_collectionPath document with '
           'writeable: $writeable, '
           'id: $id, '
           'writeBatch: $writeBatch, '
@@ -657,7 +657,7 @@ class FirestoreAPI<T extends Object> {
         _log.success('🔥 Writeable is valid!');
         _log.info(
           '🔥 '
-          'Batch creating $_collectionPath with '
+          'Batch creating $_collectionPath document with '
           'writeable: $writeable, '
           'id: $id, '
           'writeBatch: $writeBatch, '
@@ -750,7 +750,7 @@ class FirestoreAPI<T extends Object> {
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
         _log.info('🔥 '
-            'Updating $_collectionPath with '
+            'Updating $_collectionPath document with '
             'writeable: $writeable, '
             'id: $id, '
             'writeBatch: $writeBatch, '
@@ -829,7 +829,7 @@ class FirestoreAPI<T extends Object> {
     try {
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
-        _log.info('🔥 Batch updating $_collectionPath with '
+        _log.info('🔥 Batch updating $_collectionPath document with '
             'writeable: $writeable, '
             'id: $id, '
             'writeBatch: $writeBatch, '
@@ -862,7 +862,7 @@ class FirestoreAPI<T extends Object> {
       return isValidResponse;
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to batch update $_collectionPath with id: $id',
+        '🔥 Unable to batch update $_collectionPath document with id: $id',
         error: error,
         stackTrace: stackTrace,
       );
@@ -879,7 +879,7 @@ class FirestoreAPI<T extends Object> {
     WriteBatch? writeBatch,
   }) async {
     try {
-      _log.info('🔥 Deleting $_collectionPath with '
+      _log.info('🔥 Deleting $_collectionPath document with '
           'id: $id, '
           'writeBatch: $writeBatch..');
       final DocumentReference documentReference;
@@ -926,7 +926,7 @@ class FirestoreAPI<T extends Object> {
     WriteBatch? writeBatch,
   }) async {
     try {
-      _log.info('🔥 Batch deleting $_collectionPath with '
+      _log.info('🔥 Batch deleting $_collectionPath document with '
           'id: $id, '
           'writeBatch: $writeBatch..');
       final _writeBatch = writeBatch ?? this.writeBatch;
@@ -944,7 +944,7 @@ class FirestoreAPI<T extends Object> {
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to batch delete $_collectionPath with id: $id',
+        '🔥 Unable to batch delete $_collectionPath document with id: $id',
         error: error,
         stackTrace: stackTrace,
       );
