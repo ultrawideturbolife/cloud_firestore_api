@@ -26,7 +26,7 @@ class CreateExampleRequest extends Writeable {
 class ExampleAPI extends FirestoreAPI<ExampleDTO> {
   ExampleAPI()
       : super(
-          collectionPath: 'Examples',
+          collectionPath: () => 'Examples',
           firebaseFirestore: FirebaseFirestore.instance,
           fromJson: ExampleDTO.fromJson,
         );

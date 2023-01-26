@@ -14,10 +14,9 @@ import 'package:cloud_firestore_api/data/models/feedback_config.dart';
 
 part 'package:cloud_firestore_api/data/extensions/extensions.dart';
 
-typedef FirestoreQuery<T> = Query<T> Function(
+typedef CollectionReferenceQuery<T> = Query<T> Function(
     CollectionReference<T> collectionReference);
-
-// TODO(codaveto): Add assertions | 21/07/2022
+typedef CollectionGroupQuery<T> = Query<T> Function(Query<T> collectionGroup);
 
 /// Used to perform all Firestore related CRUD tasks and a little bit more.
 class FirestoreAPI<T extends Object> {
@@ -41,7 +40,7 @@ class FirestoreAPI<T extends Object> {
   /// the [FirestoreAPI]. Implement your own version in order to use to use your own logging system.
   FirestoreAPI({
     required FirebaseFirestore firebaseFirestore,
-    required String collectionPath,
+    required String Function() collectionPath,
     Map<String, dynamic> Function(T value)? toJson,
     T Function(Map<String, dynamic> json)? fromJson,
     bool tryAddLocalId = false,
@@ -50,6 +49,7 @@ class FirestoreAPI<T extends Object> {
     String createdFieldName = 'created',
     String updatedFieldName = 'updated',
     String idFieldName = 'id',
+    bool isCollectionGroup = false,
   })  : _firebaseFirestore = firebaseFirestore,
         _collectionPath = collectionPath,
         _toJson = toJson,
@@ -59,13 +59,14 @@ class FirestoreAPI<T extends Object> {
         _log = firestoreLogger,
         _createdFieldName = createdFieldName,
         _updatedFieldName = updatedFieldName,
-        _idFieldName = idFieldName;
+        _idFieldName = idFieldName,
+        _isCollectionGroup = isCollectionGroup;
 
   /// Used to performs Firestore operations.
   final FirebaseFirestore _firebaseFirestore;
 
   /// Used to find the Firestore collection.
-  final String _collectionPath;
+  final String Function() _collectionPath;
 
   /// Used to serialize your data to JSON when using 'WithConverter' methods.
   final Map<String, dynamic> Function(T value)? _toJson;
@@ -97,6 +98,9 @@ class FirestoreAPI<T extends Object> {
   ///
   /// May also be used to provide an id field to your data from Firestore when fetching data.
   final String _idFieldName;
+
+  /// Whether the [_collectionPath] refers to a collection group.
+  final bool _isCollectionGroup;
 
   /// Finds a document based on given [id].
   ///
@@ -200,7 +204,7 @@ class FirestoreAPI<T extends Object> {
           'searchTerm: $searchTerm, '
           'searchTermType: ${searchTermType.name} and '
           'limit: $limit..');
-      firestoreQuery(
+      collectionReferenceQuery(
               CollectionReference<Map<String, dynamic>> collectionReference) =>
           searchTermType.isArray
               ? limit == null
@@ -223,7 +227,7 @@ class FirestoreAPI<T extends Object> {
                         isEqualTo: searchTerm,
                       )
                       .limit(limit);
-      final result = (await firestoreQuery(
+      final result = (await collectionReferenceQuery(
         findCollection(),
       ).get())
           .docs
@@ -277,7 +281,7 @@ class FirestoreAPI<T extends Object> {
           'searchTerm: $searchTerm, '
           'searchTermType: ${searchTermType.name} and '
           'limit: $limit..');
-      firestoreQuery(CollectionReference<T> collectionReference) =>
+      collectionReferenceQuery(CollectionReference<T> collectionReference) =>
           searchTermType.isArray
               ? limit == null
                   ? collectionReference.where(
@@ -299,7 +303,7 @@ class FirestoreAPI<T extends Object> {
                         isEqualTo: searchTerm,
                       )
                       .limit(limit);
-      final result = (await firestoreQuery(
+      final result = (await collectionReferenceQuery(
         findCollectionWithConverter(),
       ).get())
           .docs
@@ -320,9 +324,9 @@ class FirestoreAPI<T extends Object> {
     }
   }
 
-  /// Finds documents based on a given [firestoreQuery].
+  /// Finds documents based on a given [collectionReferenceQuery].
   ///
-  /// Use the [whereDescription] to describe what your [firestoreQuery] is looking for so that it
+  /// Use the [whereDescription] to describe what your [collectionReferenceQuery] is looking for so that it
   /// shows proper logging in your console.
   ///
   /// This method returns raw data in the form of a List<Map<String, dynamic>>. If [_tryAddLocalId] is
@@ -333,7 +337,8 @@ class FirestoreAPI<T extends Object> {
   /// [findByQueryWithConverter] method instead. Make sure to have specified the [_toJson]
   /// and [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
   Future<FeedbackResponse<List<Map<String, dynamic>>>> findByQuery({
-    required FirestoreQuery<Map<String, dynamic>> firestoreQuery,
+    required CollectionReferenceQuery<Map<String, dynamic>>
+        collectionReferenceQuery,
     required String whereDescription,
   }) async {
     try {
@@ -341,7 +346,7 @@ class FirestoreAPI<T extends Object> {
           'Finding $_collectionPath '
           'without converter, with '
           'custom query where $whereDescription..');
-      final result = (await firestoreQuery(
+      final result = (await collectionReferenceQuery(
         findCollection(),
       ).get())
           .docs
@@ -383,7 +388,7 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findByQuery] method instead.
   Future<FeedbackResponse<List<T>>> findByQueryWithConverter({
-    required FirestoreQuery<T> firestoreQuery,
+    required CollectionReferenceQuery<T> collectionReferenceQuery,
     required String whereDescription,
   }) async {
     try {
@@ -391,10 +396,11 @@ class FirestoreAPI<T extends Object> {
           'Finding $_collectionPath '
           'with converter, with '
           'custom query where $whereDescription..');
-      final result = (await firestoreQuery(findCollectionWithConverter()).get())
-          .docs
-          .map((e) => e.data())
-          .toList();
+      final result =
+          (await collectionReferenceQuery(findCollectionWithConverter()).get())
+              .docs
+              .map((e) => e.data())
+              .toList();
       _logResultLength(result);
       return _responseConfig.searchSuccessResponse(
           isPlural: result.isPlural, result: result);
@@ -520,8 +526,7 @@ class FirestoreAPI<T extends Object> {
   }) async {
     try {
       _log.info('🔥 Checking if writeable is valid..');
-      final FeedbackResponse<DocumentReference> isValidResponse =
-          writeable.isValidResponse();
+      final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
         _log.info(
@@ -598,7 +603,8 @@ class FirestoreAPI<T extends Object> {
             isPlural: writeBatch != null, result: documentReference);
       }
       _log.warning('🔥 Writeable was invalid!');
-      return isValidResponse;
+      return FeedbackResponse.error(
+          title: isValidResponse.title, message: isValidResponse.message);
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
@@ -651,8 +657,7 @@ class FirestoreAPI<T extends Object> {
     List<FieldPath>? mergeFields,
   }) async {
     try {
-      final FeedbackResponse<WriteBatchWithReference?> isValidResponse =
-          writeable.isValidResponse();
+      final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
         _log.info(
@@ -667,7 +672,7 @@ class FirestoreAPI<T extends Object> {
           'addIdAsAField: $addIdAsField, '
           'mergeFields: $mergeFields..',
         );
-        final _writeBatch = writeBatch ?? this.writeBatch;
+        final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
         final documentReference =
             id != null ? findDocRef(id: id) : findCollection().doc();
         _log.value(documentReference.id, '🔥 Document ID');
@@ -691,7 +696,7 @@ class FirestoreAPI<T extends Object> {
         }
         _log.value(writeableAsJson, '🔥 JSON');
         _log.info('🔥 Setting data with writeBatch.set..');
-        _writeBatch.set(
+        nullSafeWriteBatch.set(
           documentReference,
           writeableAsJson,
           SetOptions(
@@ -703,13 +708,14 @@ class FirestoreAPI<T extends Object> {
             '🔥 Adding create to batch done! Returning WriteBatchWithReference..');
         return FeedbackResponse.successNone(
           result: WriteBatchWithReference(
-            writeBatch: _writeBatch,
+            writeBatch: nullSafeWriteBatch,
             documentReference: documentReference,
           ),
         );
       }
       _log.warning('🔥 Writeable was invalid!');
-      return isValidResponse;
+      return FeedbackResponse.error(
+          title: isValidResponse.title, message: isValidResponse.message);
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
@@ -745,8 +751,7 @@ class FirestoreAPI<T extends Object> {
   }) async {
     try {
       _log.info('🔥 Checking if writeable is valid..');
-      final FeedbackResponse<DocumentReference> isValidResponse =
-          writeable.isValidResponse();
+      final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
         _log.info('🔥 '
@@ -794,7 +799,8 @@ class FirestoreAPI<T extends Object> {
             isPlural: writeBatch != null, result: documentReference);
       }
       _log.warning('🔥 Writeable was invalid!');
-      return isValidResponse;
+      return FeedbackResponse.error(
+          title: isValidResponse.title, message: isValidResponse.message);
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
@@ -824,8 +830,7 @@ class FirestoreAPI<T extends Object> {
     WriteBatch? writeBatch,
     TimestampType timestampType = TimestampType.updated,
   }) async {
-    final FeedbackResponse<WriteBatchWithReference?> isValidResponse =
-        writeable.isValidResponse();
+    final isValidResponse = writeable.isValidResponse();
     try {
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
@@ -834,7 +839,7 @@ class FirestoreAPI<T extends Object> {
             'id: $id, '
             'writeBatch: $writeBatch, '
             'timestampType: ${timestampType.name}..');
-        final _writeBatch = writeBatch ?? this.writeBatch;
+        final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
         final documentReference = findDocRef(id: id);
         _log.value(documentReference.id, '🔥 Document ID');
         _log.info('🔥 Creating JSON..');
@@ -845,7 +850,7 @@ class FirestoreAPI<T extends Object> {
         );
         _log.value(writeableAsJson, '🔥 JSON');
         _log.info('🔥 Updating data with writeBatch.update..');
-        _writeBatch.update(
+        nullSafeWriteBatch.update(
           documentReference,
           writeableAsJson,
         );
@@ -853,13 +858,14 @@ class FirestoreAPI<T extends Object> {
             '🔥 Adding update to batch done! Returning WriteBatchWithReference..');
         return FeedbackResponse.successNone(
           result: WriteBatchWithReference(
-            writeBatch: _writeBatch,
+            writeBatch: nullSafeWriteBatch,
             documentReference: documentReference,
           ),
         );
       }
       _log.warning('🔥 Writeable was invalid!');
-      return isValidResponse;
+      return FeedbackResponse.error(
+          title: isValidResponse.title, message: isValidResponse.message);
     } catch (error, stackTrace) {
       _log.error(
         '🔥 Unable to batch update $_collectionPath document with id: $id',
@@ -929,16 +935,16 @@ class FirestoreAPI<T extends Object> {
       _log.info('🔥 Batch deleting $_collectionPath document with '
           'id: $id, '
           'writeBatch: $writeBatch..');
-      final _writeBatch = writeBatch ?? this.writeBatch;
+      final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
       final documentReference = findDocRef(id: id);
       _log.value(documentReference.id, '🔥 Document ID');
       _log.info('🔥 Deleting data with writeBatch.delete..');
-      _writeBatch.delete(documentReference);
+      nullSafeWriteBatch.delete(documentReference);
       _log.success(
           '🔥 Adding delete to batch done! Returning WriteBatchWithReference..');
       return FeedbackResponse.successNone(
         result: WriteBatchWithReference(
-          writeBatch: _writeBatch,
+          writeBatch: nullSafeWriteBatch,
           documentReference: documentReference,
         ),
       );
@@ -966,16 +972,44 @@ class FirestoreAPI<T extends Object> {
   CollectionReference<T> findCollectionWithConverter() {
     _log.info(
         '🔥 Finding $_collectionPath CollectionReference with converter..');
-    return _firebaseFirestore.collection(_collectionPath).withConverter<T>(
+    return _firebaseFirestore.collection(_collectionPath()).withConverter<T>(
           fromFirestore: _tryAddLocalId
-              ? (snapshot, options) => _fromJson!(
-                    snapshot.data()!.tryAddLocalId(
-                          snapshot.id,
-                          idFieldName: _idFieldName,
-                        ),
+              ? (snapshot, _) => _fromJson!(
+                    (snapshot.data() ?? {}).tryAddLocalId(
+                      snapshot.id,
+                      idFieldName: _idFieldName,
+                    ),
                   )
-              : (snapshot, options) => _fromJson!(snapshot.data()!),
-          toFirestore: (value, options) => _toJson!(value),
+              : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
+          toFirestore: (value, _) => _toJson!(value),
+        );
+  }
+
+  /// Finds a [Query] of type [T] based on specified [_collectionPath].
+  ///
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// will not now how to convert the data to [T].
+  ///
+  /// If [_tryAddLocalId] is true then your data will also contain a local id field based
+  /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
+  /// have easy access to the document id at any time.
+  ///
+  /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
+  /// using the [findCollectionGroup] method instead.
+  Query<T> findCollectionGroupWithConverter() {
+    _log.info('🔥 Finding $_collectionPath Query with converter..');
+    return _firebaseFirestore
+        .collectionGroup(_collectionPath())
+        .withConverter<T>(
+          fromFirestore: _tryAddLocalId
+              ? (snapshot, _) => _fromJson!(
+                    (snapshot.data() ?? {}).tryAddLocalId(
+                      snapshot.id,
+                      idFieldName: _idFieldName,
+                    ),
+                  )
+              : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
+          toFirestore: (value, _) => _toJson!(value),
         );
   }
 
@@ -995,14 +1029,14 @@ class FirestoreAPI<T extends Object> {
         '🔥 Finding $_collectionPath DocumentReference with converter and id: $id..');
     return _firebaseFirestore.doc('$_collectionPath/$id').withConverter<T>(
           fromFirestore: _tryAddLocalId
-              ? (snapshot, options) => _fromJson!(
-                    snapshot.data()!.tryAddLocalId(
-                          snapshot.id,
-                          idFieldName: _idFieldName,
-                        ),
+              ? (snapshot, _) => _fromJson!(
+                    (snapshot.data() ?? {}).tryAddLocalId(
+                      snapshot.id,
+                      idFieldName: _idFieldName,
+                    ),
                   )
-              : (snapshot, options) => _fromJson!(snapshot.data()!),
-          toFirestore: (value, options) => _toJson!(value),
+              : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
+          toFirestore: (value, _) => _toJson!(value),
         );
   }
 
@@ -1038,14 +1072,17 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findStream] method instead.
   Stream<List<T>> findStreamWithConverter() {
-    final collectionWithConverter = findCollectionWithConverter();
     _log.info('🔥 Finding $_collectionPath Collection Stream with converter..');
-    return collectionWithConverter
-        .snapshots()
-        .map((event) => event.docs.map((e) => e.data()).toList());
+    return !_isCollectionGroup
+        ? findCollectionWithConverter().snapshots().map(
+              (event) => event.docs.map((e) => e.data()).toList(),
+            )
+        : findCollectionGroupWithConverter().snapshots().map(
+              (event) => event.docs.map((e) => e.data()).toList(),
+            );
   }
 
-  /// Finds a [Stream] of list of [T] based on given [firestoreQuery] and [whereDescription].
+  /// Finds a [Stream] of list of [T] based on given [collectionReferenceQuery] and [whereDescription].
   ///
   /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
   /// will not now how to convert the data to [T].
@@ -1057,15 +1094,25 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findStreamByQuery] method instead.
   Stream<List<T>> findStreamByQueryWithConverter({
-    required FirestoreQuery<T> firestoreQuery,
+    CollectionReferenceQuery<T>? collectionReferenceQuery,
+    CollectionGroupQuery<T>? collectionGroupQuery,
     required String whereDescription,
   }) {
-    final collectionWithConverter = findCollectionWithConverter();
+    assert((collectionGroupQuery != null) == _isCollectionGroup,
+        'Use a collectionGroupQuery when working with a collection group.');
     _log.info(
         '🔥 Finding $_collectionPath Stream with converter where $whereDescription..');
-    return firestoreQuery(collectionWithConverter).snapshots().map(
-          (event) => event.docs.map((e) => e.data()).toList(),
-        );
+    return !_isCollectionGroup
+        ? collectionReferenceQuery!(findCollectionWithConverter())
+            .snapshots()
+            .map(
+              (event) => event.docs.map((e) => e.data()).toList(),
+            )
+        : collectionGroupQuery!(findCollectionGroupWithConverter())
+            .snapshots()
+            .map(
+              (event) => event.docs.map((e) => e.data()).toList(),
+            );
   }
 
   /// Finds a [Stream] of type [T] based on given [id].
@@ -1091,8 +1138,7 @@ class FirestoreAPI<T extends Object> {
   /// Finds a [CollectionReference] of type Map<String, dynamic> based on specified [_collectionPath].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
-  /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
-  /// have easy access to the document id at any time.
+  /// on the [_idFieldName] specified in the constructor.
   ///
   /// If you rather want to retrieve data in the form of [T] consider
   /// using the [findCollectionWithConverter] method instead.
@@ -1101,16 +1147,38 @@ class FirestoreAPI<T extends Object> {
         '🔥 Finding $_collectionPath CollectionReference without converter..');
     return _tryAddLocalId
         ? _firebaseFirestore
-            .collection(_collectionPath)
+            .collection(_collectionPath())
             .withConverter<Map<String, dynamic>>(
-              fromFirestore: (snapshot, options) =>
-                  snapshot.data()!.tryAddLocalId(
-                        snapshot.id,
-                        idFieldName: _idFieldName,
-                      ),
-              toFirestore: (value, options) => value,
+              fromFirestore: (snapshot, _) =>
+                  (snapshot.data() ?? {}).tryAddLocalId(
+                snapshot.id,
+                idFieldName: _idFieldName,
+              ),
+              toFirestore: (value, _) => value,
             )
-        : _firebaseFirestore.collection(_collectionPath);
+        : _firebaseFirestore.collection(_collectionPath());
+  }
+
+  /// Finds a [Query] of type Map<String, dynamic> based on specified [_collectionPath].
+  ///
+  /// If [_tryAddLocalId] is true then your data will also contain a local id field based
+  /// on the [_idFieldName] specified in the constructor.
+  ///
+  /// If you rather want to retrieve data in the form of [T] consider
+  /// using the [findCollectionGroupWithConverter] method instead.
+  Query<Map<String, dynamic>> findCollectionGroup() {
+    _log.info('🔥 Finding $_collectionPath Query with converter..');
+    return _firebaseFirestore
+        .collectionGroup(_collectionPath())
+        .withConverter<Map<String, dynamic>>(
+          fromFirestore: _tryAddLocalId
+              ? (snapshot, _) => (snapshot.data() ?? {}).tryAddLocalId(
+                    snapshot.id,
+                    idFieldName: _idFieldName,
+                  )
+              : (snapshot, _) => (snapshot.data() ?? {}),
+          toFirestore: (value, _) => value,
+        );
   }
 
   /// Finds a [DocumentReference] of type Map<String, dynamic> based on given [id].
@@ -1130,12 +1198,12 @@ class FirestoreAPI<T extends Object> {
         ? _firebaseFirestore
             .doc('$_collectionPath/$id')
             .withConverter<Map<String, dynamic>>(
-              fromFirestore: (snapshot, options) =>
-                  snapshot.data()!.tryAddLocalId(
-                        snapshot.id,
-                        idFieldName: _idFieldName,
-                      ),
-              toFirestore: (value, options) => value,
+              fromFirestore: (snapshot, _) =>
+                  (snapshot.data() ?? {}).tryAddLocalId(
+                snapshot.id,
+                idFieldName: _idFieldName,
+              ),
+              toFirestore: (value, _) => value,
             )
         : _firebaseFirestore.doc('$_collectionPath/$id');
   }
@@ -1169,13 +1237,14 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the form of list of [T] consider using the
   /// [findStreamWithConverter] method instead.
   Stream<QuerySnapshot<Map<String, dynamic>>> findStream() {
-    final collection = findCollection();
     _log.info(
         '🔥 Finding $_collectionPath CollectionReference Stream without converter..');
-    return collection.snapshots();
+    return !_isCollectionGroup
+        ? findCollection().snapshots()
+        : findCollectionGroup().snapshots();
   }
 
-  /// Finds a [Stream] of List<Map<String, dynamic>> based on given [firestoreQuery] and [whereDescription].
+  /// Finds a [Stream] of List<Map<String, dynamic>> based on given [collectionReferenceQuery] and [whereDescription].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
@@ -1184,15 +1253,22 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the form of list of [T] consider using the
   /// [findStreamByQueryWithConverter] method instead.
   Stream<List<Map<String, dynamic>>> findStreamByQuery({
-    required FirestoreQuery<Map<String, dynamic>> firestoreQuery,
+    required CollectionReferenceQuery<Map<String, dynamic>>?
+        collectionReferenceQuery,
+    CollectionGroupQuery<Map<String, dynamic>>? collectionGroupQuery,
     required String whereDescription,
   }) {
-    final collection = findCollection();
+    assert((collectionGroupQuery != null) == _isCollectionGroup,
+        'Use a collectionGroupQuery when working with a collection group.');
     _log.info(
         '🔥 Finding $_collectionPath Stream without converter where $whereDescription..');
-    return firestoreQuery(collection).snapshots().map(
-          (event) => event.docs.map((e) => e.data()).toList(),
-        );
+    return !_isCollectionGroup
+        ? collectionReferenceQuery!(findCollection()).snapshots().map(
+              (event) => event.docs.map((e) => e.data()).toList(),
+            )
+        : collectionGroupQuery!(findCollectionGroup()).snapshots().map(
+              (event) => event.docs.map((e) => e.data()).toList(),
+            );
   }
 
   /// Finds a [Stream] of type Map<String, dynamic> based on given [id].

@@ -1,6 +1,6 @@
 name: cloud_firestore_api
 description: A clean and efficient approach to dealing with data from Firestore.
-version: 0.0.1+4
+version: 0.0.2
 homepage: https://github.com/codaveto/cloud_firestore_api
 
 environment:
@@ -10,12 +10,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_firestore: ^4.1.0
-  feedback_response: ^0.0.1+1
+  cloud_firestore: ^4.3.1
+  feedback_response: ^0.0.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^1.0.0
+  flutter_lints: ^2.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
