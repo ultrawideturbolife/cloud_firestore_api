@@ -1,3 +1,7 @@
+## 0.0.2+1
+
+* **🐛️ Bugfix:** Fixed bug where collection path was treated as a function instead of String.
+
 ## 0.0.2
 
 * **⚠️ Breaking:** Added lazy collection path support, collection path is now a callback so you may use dynamic id's in the path if needed and the API will stay in sync.

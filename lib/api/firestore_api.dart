@@ -115,7 +115,7 @@ class FirestoreAPI<T extends Object> {
     required String id,
   }) async {
     try {
-      _log.info('🔥 Finding $_collectionPath '
+      _log.info('🔥 Finding ${_collectionPath()} '
           'without converter, '
           'id: $id..');
       final result = (await findDocRef(
@@ -134,7 +134,7 @@ class FirestoreAPI<T extends Object> {
       }
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to find $_collectionPath without converter and id: $id.',
+        '🔥 Unable to find ${_collectionPath()} without converter and id: $id.',
         error: error,
         stackTrace: stackTrace,
       );
@@ -157,7 +157,7 @@ class FirestoreAPI<T extends Object> {
     required String id,
   }) async {
     try {
-      _log.info('🔥 Finding $_collectionPath '
+      _log.info('🔥 Finding ${_collectionPath()} '
           'with converter, '
           'id: $id..');
       final result = (await findDocRefWithConverter(id: id).get()).data();
@@ -171,7 +171,7 @@ class FirestoreAPI<T extends Object> {
       }
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to find $_collectionPath document with converter and id: $id.',
+        '🔥 Unable to find ${_collectionPath()} document with converter and id: $id.',
         error: error,
         stackTrace: stackTrace,
       );
@@ -199,7 +199,7 @@ class FirestoreAPI<T extends Object> {
     int? limit,
   }) async {
     try {
-      _log.info('🔥 Searching $_collectionPath '
+      _log.info('🔥 Searching ${_collectionPath()} '
           'without converter, '
           'searchTerm: $searchTerm, '
           'searchTermType: ${searchTermType.name} and '
@@ -243,7 +243,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to find $_collectionPath documents with '
+        'Unable to find ${_collectionPath()} documents with '
         'search term: $searchTerm and '
         'field: $searchField}',
         error: error,
@@ -276,7 +276,7 @@ class FirestoreAPI<T extends Object> {
     int? limit,
   }) async {
     try {
-      _log.info('🔥 Searching $_collectionPath '
+      _log.info('🔥 Searching ${_collectionPath()} '
           'without converter, '
           'searchTerm: $searchTerm, '
           'searchTermType: ${searchTermType.name} and '
@@ -315,7 +315,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
           '🔥 '
-          'Unable to find $_collectionPath documents with '
+          'Unable to find ${_collectionPath()} documents with '
           'search term: $searchTerm and '
           'field: $searchField}',
           error: error,
@@ -343,7 +343,7 @@ class FirestoreAPI<T extends Object> {
   }) async {
     try {
       _log.info('🔥 '
-          'Finding $_collectionPath '
+          'Finding ${_collectionPath()} '
           'without converter, with '
           'custom query where $whereDescription..');
       final result = (await collectionReferenceQuery(
@@ -362,7 +362,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to find $_collectionPath documents without converter, with '
+        'Unable to find ${_collectionPath()} documents without converter, with '
         'custom query where $whereDescription.',
         error: error,
         stackTrace: stackTrace,
@@ -393,7 +393,7 @@ class FirestoreAPI<T extends Object> {
   }) async {
     try {
       _log.info('🔥 '
-          'Finding $_collectionPath '
+          'Finding ${_collectionPath()} '
           'with converter, with '
           'custom query where $whereDescription..');
       final result =
@@ -407,7 +407,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to find $_collectionPath documents with converter, with '
+        'Unable to find ${_collectionPath()} documents with converter, with '
         'custom query where $whereDescription.',
         error: error,
         stackTrace: stackTrace,
@@ -427,7 +427,7 @@ class FirestoreAPI<T extends Object> {
   /// and [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
   Future<FeedbackResponse<List<Map<String, dynamic>>>> findAll() async {
     try {
-      _log.info('🔥 Finding all $_collectionPath '
+      _log.info('🔥 Finding all ${_collectionPath()} '
           'without converter..');
       final result = (await findCollection().get())
           .docs
@@ -440,7 +440,7 @@ class FirestoreAPI<T extends Object> {
           isPlural: result.isPlural, result: result);
     } catch (error, stackTrace) {
       _log.error(
-          '🔥 Unable to find $_collectionPath all documents per findAll query',
+          '🔥 Unable to find ${_collectionPath()} all documents per findAll query',
           error: error,
           stackTrace: stackTrace);
       return _responseConfig.searchFailedResponse(isPlural: true);
@@ -461,7 +461,7 @@ class FirestoreAPI<T extends Object> {
   /// using the [findAll] method instead.
   Future<FeedbackResponse<List<T>>> findAllWithConverter() async {
     try {
-      _log.info('🔥 Finding all $_collectionPath '
+      _log.info('🔥 Finding all ${_collectionPath()} '
           'with converter..');
       final result = (await findCollectionWithConverter().get())
           .docs
@@ -472,7 +472,7 @@ class FirestoreAPI<T extends Object> {
           isPlural: result.isPlural, result: result);
     } catch (error, stackTrace) {
       _log.error(
-          '🔥 Unable to find $_collectionPath all documents per findAll query',
+          '🔥 Unable to find ${_collectionPath()} all documents per findAll query',
           error: error,
           stackTrace: stackTrace);
       return _responseConfig.searchFailedResponse(isPlural: true);
@@ -531,7 +531,7 @@ class FirestoreAPI<T extends Object> {
         _log.success('🔥 Writeable is valid!');
         _log.info(
           '🔥 '
-          'Creating $_collectionPath document with '
+          'Creating ${_collectionPath()} document with '
           'writeable: $writeable, '
           'id: $id, '
           'writeBatch: $writeBatch, '
@@ -608,7 +608,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to create $_collectionPath document with '
+        'Unable to create ${_collectionPath()} document with '
         'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
@@ -662,7 +662,7 @@ class FirestoreAPI<T extends Object> {
         _log.success('🔥 Writeable is valid!');
         _log.info(
           '🔥 '
-          'Batch creating $_collectionPath document with '
+          'Batch creating ${_collectionPath()} document with '
           'writeable: $writeable, '
           'id: $id, '
           'writeBatch: $writeBatch, '
@@ -719,7 +719,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to create $_collectionPath document with '
+        'Unable to create ${_collectionPath()} document with '
         'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
@@ -755,7 +755,7 @@ class FirestoreAPI<T extends Object> {
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
         _log.info('🔥 '
-            'Updating $_collectionPath document with '
+            'Updating ${_collectionPath()} document with '
             'writeable: $writeable, '
             'id: $id, '
             'writeBatch: $writeBatch, '
@@ -804,7 +804,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to update $_collectionPath document with '
+        'Unable to update ${_collectionPath()} document with '
         'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
@@ -834,7 +834,7 @@ class FirestoreAPI<T extends Object> {
     try {
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
-        _log.info('🔥 Batch updating $_collectionPath document with '
+        _log.info('🔥 Batch updating ${_collectionPath()} document with '
             'writeable: $writeable, '
             'id: $id, '
             'writeBatch: $writeBatch, '
@@ -868,7 +868,7 @@ class FirestoreAPI<T extends Object> {
           title: isValidResponse.title, message: isValidResponse.message);
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to batch update $_collectionPath document with id: $id',
+        '🔥 Unable to batch update ${_collectionPath()} document with id: $id',
         error: error,
         stackTrace: stackTrace,
       );
@@ -885,7 +885,7 @@ class FirestoreAPI<T extends Object> {
     WriteBatch? writeBatch,
   }) async {
     try {
-      _log.info('🔥 Deleting $_collectionPath document with '
+      _log.info('🔥 Deleting ${_collectionPath()} document with '
           'id: $id, '
           'writeBatch: $writeBatch..');
       final DocumentReference documentReference;
@@ -917,7 +917,7 @@ class FirestoreAPI<T extends Object> {
       return _responseConfig.deleteSuccessResponse(
           isPlural: writeBatch != null);
     } catch (error, stackTrace) {
-      _log.error('🔥 Unable to update $_collectionPath document',
+      _log.error('🔥 Unable to update ${_collectionPath()} document',
           error: error, stackTrace: stackTrace);
       return _responseConfig.deleteFailedResponse(isPlural: writeBatch != null);
     }
@@ -932,7 +932,7 @@ class FirestoreAPI<T extends Object> {
     WriteBatch? writeBatch,
   }) async {
     try {
-      _log.info('🔥 Batch deleting $_collectionPath document with '
+      _log.info('🔥 Batch deleting ${_collectionPath()} document with '
           'id: $id, '
           'writeBatch: $writeBatch..');
       final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
@@ -950,7 +950,7 @@ class FirestoreAPI<T extends Object> {
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to batch delete $_collectionPath document with id: $id',
+        '🔥 Unable to batch delete ${_collectionPath()} document with id: $id',
         error: error,
         stackTrace: stackTrace,
       );
@@ -971,7 +971,7 @@ class FirestoreAPI<T extends Object> {
   /// using the [findCollection] method instead.
   CollectionReference<T> findCollectionWithConverter() {
     _log.info(
-        '🔥 Finding $_collectionPath CollectionReference with converter..');
+        '🔥 Finding ${_collectionPath()} CollectionReference with converter..');
     return _firebaseFirestore.collection(_collectionPath()).withConverter<T>(
           fromFirestore: _tryAddLocalId
               ? (snapshot, _) => _fromJson!(
@@ -997,7 +997,7 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findCollectionGroup] method instead.
   Query<T> findCollectionGroupWithConverter() {
-    _log.info('🔥 Finding $_collectionPath Query with converter..');
+    _log.info('🔥 Finding ${_collectionPath()} Query with converter..');
     return _firebaseFirestore
         .collectionGroup(_collectionPath())
         .withConverter<T>(
@@ -1026,8 +1026,8 @@ class FirestoreAPI<T extends Object> {
   /// using the [findDocRef] method instead.
   DocumentReference<T> findDocRefWithConverter({required String id}) {
     _log.info(
-        '🔥 Finding $_collectionPath DocumentReference with converter and id: $id..');
-    return _firebaseFirestore.doc('$_collectionPath/$id').withConverter<T>(
+        '🔥 Finding ${_collectionPath()} DocumentReference with converter and id: $id..');
+    return _firebaseFirestore.doc('${_collectionPath()}/$id').withConverter<T>(
           fromFirestore: _tryAddLocalId
               ? (snapshot, _) => _fromJson!(
                     (snapshot.data() ?? {}).tryAddLocalId(
@@ -1056,7 +1056,7 @@ class FirestoreAPI<T extends Object> {
   }) async {
     final docRefWithConverter = findDocRefWithConverter(id: id);
     _log.info(
-        '🔥 Finding $_collectionPath DocumentSnapshot with converter and id: $id..');
+        '🔥 Finding ${_collectionPath()} DocumentSnapshot with converter and id: $id..');
     return docRefWithConverter.get();
   }
 
@@ -1072,7 +1072,8 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findStream] method instead.
   Stream<List<T>> findStreamWithConverter() {
-    _log.info('🔥 Finding $_collectionPath Collection Stream with converter..');
+    _log.info(
+        '🔥 Finding ${_collectionPath()} Collection Stream with converter..');
     return !_isCollectionGroup
         ? findCollectionWithConverter().snapshots().map(
               (event) => event.docs.map((e) => e.data()).toList(),
@@ -1101,7 +1102,7 @@ class FirestoreAPI<T extends Object> {
     assert((collectionGroupQuery != null) == _isCollectionGroup,
         'Use a collectionGroupQuery when working with a collection group.');
     _log.info(
-        '🔥 Finding $_collectionPath Stream with converter where $whereDescription..');
+        '🔥 Finding ${_collectionPath()} Stream with converter where $whereDescription..');
     return !_isCollectionGroup
         ? collectionReferenceQuery!(findCollectionWithConverter())
             .snapshots()
@@ -1131,7 +1132,7 @@ class FirestoreAPI<T extends Object> {
   }) {
     final docRefWithConverter = findDocRefWithConverter(id: id);
     _log.info(
-        '🔥 Finding $_collectionPath DocumentReference Stream with converter and id: $id..');
+        '🔥 Finding ${_collectionPath()} DocumentReference Stream with converter and id: $id..');
     return docRefWithConverter.snapshots().map((e) => e.data());
   }
 
@@ -1144,7 +1145,7 @@ class FirestoreAPI<T extends Object> {
   /// using the [findCollectionWithConverter] method instead.
   CollectionReference<Map<String, dynamic>> findCollection() {
     _log.info(
-        '🔥 Finding $_collectionPath CollectionReference without converter..');
+        '🔥 Finding ${_collectionPath()} CollectionReference without converter..');
     return _tryAddLocalId
         ? _firebaseFirestore
             .collection(_collectionPath())
@@ -1167,7 +1168,7 @@ class FirestoreAPI<T extends Object> {
   /// If you rather want to retrieve data in the form of [T] consider
   /// using the [findCollectionGroupWithConverter] method instead.
   Query<Map<String, dynamic>> findCollectionGroup() {
-    _log.info('🔥 Finding $_collectionPath Query with converter..');
+    _log.info('🔥 Finding ${_collectionPath()} Query with converter..');
     return _firebaseFirestore
         .collectionGroup(_collectionPath())
         .withConverter<Map<String, dynamic>>(
@@ -1193,10 +1194,10 @@ class FirestoreAPI<T extends Object> {
     required String id,
   }) {
     _log.info(
-        '🔥 Finding $_collectionPath DocumentReference without converter and id: $id..');
+        '🔥 Finding ${_collectionPath()} DocumentReference without converter and id: $id..');
     return _tryAddLocalId
         ? _firebaseFirestore
-            .doc('$_collectionPath/$id')
+            .doc('${_collectionPath()}/$id')
             .withConverter<Map<String, dynamic>>(
               fromFirestore: (snapshot, _) =>
                   (snapshot.data() ?? {}).tryAddLocalId(
@@ -1205,7 +1206,7 @@ class FirestoreAPI<T extends Object> {
               ),
               toFirestore: (value, _) => value,
             )
-        : _firebaseFirestore.doc('$_collectionPath/$id');
+        : _firebaseFirestore.doc('${_collectionPath()}/$id');
   }
 
   /// Finds a [DocumentSnapshot] of type Map<String, dynamic> based on given [id].
@@ -1224,7 +1225,7 @@ class FirestoreAPI<T extends Object> {
   }) async {
     final docRef = findDocRef(id: id);
     _log.info(
-        '🔥 Finding $_collectionPath DocumentSnapshot without converter and id: $id..');
+        '🔥 Finding ${_collectionPath()} DocumentSnapshot without converter and id: $id..');
     return docRef.get();
   }
 
@@ -1238,7 +1239,7 @@ class FirestoreAPI<T extends Object> {
   /// [findStreamWithConverter] method instead.
   Stream<QuerySnapshot<Map<String, dynamic>>> findStream() {
     _log.info(
-        '🔥 Finding $_collectionPath CollectionReference Stream without converter..');
+        '🔥 Finding ${_collectionPath()} CollectionReference Stream without converter..');
     return !_isCollectionGroup
         ? findCollection().snapshots()
         : findCollectionGroup().snapshots();
@@ -1261,7 +1262,7 @@ class FirestoreAPI<T extends Object> {
     assert((collectionGroupQuery != null) == _isCollectionGroup,
         'Use a collectionGroupQuery when working with a collection group.');
     _log.info(
-        '🔥 Finding $_collectionPath Stream without converter where $whereDescription..');
+        '🔥 Finding ${_collectionPath()} Stream without converter where $whereDescription..');
     return !_isCollectionGroup
         ? collectionReferenceQuery!(findCollection()).snapshots().map(
               (event) => event.docs.map((e) => e.data()).toList(),
@@ -1284,7 +1285,7 @@ class FirestoreAPI<T extends Object> {
   }) {
     final docRef = findDocRef(id: id);
     _log.info(
-        '🔥 Finding $_collectionPath DocumentReference Stream without converter and id: $id..');
+        '🔥 Finding ${_collectionPath()} DocumentReference Stream without converter and id: $id..');
     return docRef.snapshots();
   }
 
