@@ -1,3 +1,7 @@
+## 0.0.3
+
+* **⚠️ Breaking:** Updates search functionality to also search field that start with given search term and renamed `SearchTermType.string` to `SearchTermType.startsWith` and renamed `SearchTermType.array` to `SearchTermType.arrayContains`.
+
 ## 0.0.2+1
 
 * **🐛️ Bugfix:** Fixed bug where collection path was treated as a function instead of String.

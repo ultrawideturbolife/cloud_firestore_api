@@ -89,6 +89,6 @@ extension on List {
 }
 
 extension on SearchTermType {
-  /// Helper method to decide whether a [SearchTermType] is a [SearchTermType.array].
-  bool get isArray => this == SearchTermType.array;
+  /// Helper method to decide whether a [SearchTermType] is a [SearchTermType.arrayContains].
+  bool get isArray => this == SearchTermType.arrayContains;
 }

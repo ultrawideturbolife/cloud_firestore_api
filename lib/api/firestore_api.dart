@@ -182,7 +182,7 @@ class FirestoreAPI<T extends Object> {
   /// Finds documents based on a given [searchTerm] and [searchField].
   ///
   /// The [searchTermType] defines the type of field that is specified as [searchField]. You are
-  /// able to search a [SearchTermType.string] field for direct hits or for a [SearchTermType.array]
+  /// able to search a [SearchTermType.startsWith] field for direct hits or for a [SearchTermType.arrayContains]
   /// that may contain the [searchField].
   ///
   /// This method returns raw data in the form of a List<Map<String, dynamic>>. If [_tryAddLocalId] is
@@ -202,6 +202,7 @@ class FirestoreAPI<T extends Object> {
       _log.info('🔥 Searching ${_collectionPath()} '
           'without converter, '
           'searchTerm: $searchTerm, '
+          'searchField: $searchField, '
           'searchTermType: ${searchTermType.name} and '
           'limit: $limit..');
       collectionReferenceQuery(
@@ -219,12 +220,14 @@ class FirestoreAPI<T extends Object> {
               : limit == null
                   ? collectionReference.where(
                       searchField,
-                      isEqualTo: searchTerm,
+                      isGreaterThanOrEqualTo: searchTerm,
+                      isLessThan: '$searchTerm\uf8ff',
                     )
                   : collectionReference
                       .where(
                         searchField,
-                        isEqualTo: searchTerm,
+                        isGreaterThanOrEqualTo: searchTerm,
+                        isLessThan: '$searchTerm\uf8ff',
                       )
                       .limit(limit);
       final result = (await collectionReferenceQuery(
@@ -256,7 +259,7 @@ class FirestoreAPI<T extends Object> {
   /// Finds documents based on a given [searchTerm] and [searchField].
   ///
   /// The [searchTermType] defines the type of field that is specified as [searchField]. You are
-  /// able to search a [SearchTermType.string] field for direct hits or for a [SearchTermType.array]
+  /// able to search a [SearchTermType.startsWith] field for direct hits or for a [SearchTermType.arrayContains]
   /// that may contain the [searchField].
   ///
   /// This method returns data in the form of a list of [T]. Make sure to have specified the
@@ -279,6 +282,7 @@ class FirestoreAPI<T extends Object> {
       _log.info('🔥 Searching ${_collectionPath()} '
           'without converter, '
           'searchTerm: $searchTerm, '
+          'searchField: $searchField, '
           'searchTermType: ${searchTermType.name} and '
           'limit: $limit..');
       collectionReferenceQuery(CollectionReference<T> collectionReference) =>
@@ -295,12 +299,14 @@ class FirestoreAPI<T extends Object> {
               : limit == null
                   ? collectionReference.where(
                       searchField,
-                      isEqualTo: searchTerm,
+                      isGreaterThanOrEqualTo: searchTerm,
+                      isLessThan: '$searchTerm\uf8ff',
                     )
                   : collectionReference
                       .where(
                         searchField,
-                        isEqualTo: searchTerm,
+                        isGreaterThanOrEqualTo: searchTerm,
+                        isLessThan: '$searchTerm\uf8ff',
                       )
                       .limit(limit);
       final result = (await collectionReferenceQuery(
@@ -374,7 +380,7 @@ class FirestoreAPI<T extends Object> {
   /// Finds documents based on a given [searchTerm] and [searchField].
   ///
   /// The [searchTermType] defines the type of field that is specified as [searchField]. You are
-  /// able to search a [SearchTermType.string] field for direct hits or for a [SearchTermType.array]
+  /// able to search a [SearchTermType.startsWith] field for direct hits or for a [SearchTermType.arrayContains]
   /// that may contain the [searchField].
   ///
   /// This method returns data in the form of a list of [T]. Make sure to have specified the
