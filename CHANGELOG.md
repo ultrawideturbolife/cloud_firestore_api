@@ -1,5 +1,6 @@
 ## 0.0.3
 
+* **✨ New:** Added option to also search for number equivalent of search term if possible by setting `doSearchNumberEquivalent` to true in `findBySearchTerm` and `findBySearchTermWithConverter` methods.
 * **⚠️ Breaking:** Updates search functionality to also search field that start with given search term and renamed `SearchTermType.string` to `SearchTermType.startsWith` and renamed `SearchTermType.array` to `SearchTermType.arrayContains`.
 
 ## 0.0.2+1

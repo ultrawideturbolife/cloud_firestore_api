@@ -196,6 +196,7 @@ class FirestoreAPI<T extends Object> {
     required String searchTerm,
     required String searchField,
     required SearchTermType searchTermType,
+    bool doSearchNumberEquivalent = false,
     int? limit,
   }) async {
     try {
@@ -238,6 +239,54 @@ class FirestoreAPI<T extends Object> {
             (e) => e.data(),
           )
           .toList();
+      if (doSearchNumberEquivalent) {
+        try {
+          final numberSearchTerm = double.tryParse(searchTerm);
+          if (numberSearchTerm != null) {
+            collectionReferenceQuery(
+                    CollectionReference<Map<String, dynamic>>
+                        collectionReference) =>
+                searchTermType.isArray
+                    ? limit == null
+                        ? collectionReference.where(
+                            searchField,
+                            arrayContainsAny: [numberSearchTerm],
+                          )
+                        : collectionReference.where(
+                            searchField,
+                            arrayContainsAny: [numberSearchTerm],
+                          ).limit(limit)
+                    : limit == null
+                        ? collectionReference.where(
+                            searchField,
+                            isGreaterThanOrEqualTo: numberSearchTerm,
+                            isLessThan: numberSearchTerm + 1,
+                          )
+                        : collectionReference
+                            .where(
+                              searchField,
+                              isGreaterThanOrEqualTo: numberSearchTerm,
+                              isLessThan: 'numberSearchTerm + 1',
+                            )
+                            .limit(limit);
+            final numberResult = (await collectionReferenceQuery(
+              findCollection(),
+            ).get())
+                .docs
+                .map(
+                  (e) => e.data(),
+                )
+                .toList();
+            result.addAll(numberResult);
+          }
+        } catch (error, stackTrace) {
+          _log.error(
+            '${error.runtimeType} caught while trying to search for number equivalent of $searchTerm',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      }
       _logResultLength(result);
       return _responseConfig.searchSuccessResponse(
         isPlural: result.isPlural,
@@ -276,6 +325,7 @@ class FirestoreAPI<T extends Object> {
     required String searchTerm,
     required String searchField,
     required SearchTermType searchTermType,
+    bool doSearchNumberEquivalent = false,
     int? limit,
   }) async {
     try {
@@ -315,6 +365,53 @@ class FirestoreAPI<T extends Object> {
           .docs
           .map((e) => e.data())
           .toList();
+      if (doSearchNumberEquivalent) {
+        try {
+          final numberSearchTerm = double.tryParse(searchTerm);
+          if (numberSearchTerm != null) {
+            collectionReferenceQuery(
+                    CollectionReference<T> collectionReference) =>
+                searchTermType.isArray
+                    ? limit == null
+                        ? collectionReference.where(
+                            searchField,
+                            arrayContainsAny: [numberSearchTerm],
+                          )
+                        : collectionReference.where(
+                            searchField,
+                            arrayContainsAny: [numberSearchTerm],
+                          ).limit(limit)
+                    : limit == null
+                        ? collectionReference.where(
+                            searchField,
+                            isGreaterThanOrEqualTo: numberSearchTerm,
+                            isLessThan: numberSearchTerm + 1,
+                          )
+                        : collectionReference
+                            .where(
+                              searchField,
+                              isGreaterThanOrEqualTo: numberSearchTerm,
+                              isLessThan: 'numberSearchTerm + 1',
+                            )
+                            .limit(limit);
+            final numberResult = (await collectionReferenceQuery(
+              findCollectionWithConverter(),
+            ).get())
+                .docs
+                .map(
+                  (e) => e.data(),
+                )
+                .toList();
+            result.addAll(numberResult);
+          }
+        } catch (error, stackTrace) {
+          _log.error(
+            '${error.runtimeType} caught while trying to search for number equivalent of $searchTerm',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      }
       _logResultLength(result);
       return _responseConfig.searchSuccessResponse(
           isPlural: result.isPlural, result: result);
