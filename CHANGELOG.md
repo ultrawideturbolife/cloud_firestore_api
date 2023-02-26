@@ -1,3 +1,7 @@
+## 0.0.3+1
+
+* **🐛️ Bugfix:** Fixed bug where search term search with numbers enables was not returning the right results.
+
 ## 0.0.3
 
 * **✨ New:** Added option to also search for number equivalent of search term if possible by setting `doSearchNumberEquivalent` to true in `findBySearchTerm` and `findBySearchTermWithConverter` methods.

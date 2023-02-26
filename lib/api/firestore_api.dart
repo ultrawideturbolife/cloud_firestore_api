@@ -266,7 +266,7 @@ class FirestoreAPI<T extends Object> {
                             .where(
                               searchField,
                               isGreaterThanOrEqualTo: numberSearchTerm,
-                              isLessThan: 'numberSearchTerm + 1',
+                              isLessThan: numberSearchTerm + 1,
                             )
                             .limit(limit);
             final numberResult = (await collectionReferenceQuery(
@@ -391,7 +391,7 @@ class FirestoreAPI<T extends Object> {
                             .where(
                               searchField,
                               isGreaterThanOrEqualTo: numberSearchTerm,
-                              isLessThan: 'numberSearchTerm + 1',
+                              isLessThan: numberSearchTerm + 1,
                             )
                             .limit(limit);
             final numberResult = (await collectionReferenceQuery(
