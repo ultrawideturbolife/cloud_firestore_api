@@ -18,7 +18,7 @@
 ## 0.0.2
 
 * **⚠️ Breaking:** Added lazy collection path support, collection path is now a callback so you may use dynamic id's in the path if needed and the API will stay in sync.
-* **✨ New:** Added support for collection group queries with `FirestoreAPI._isCollectionGroup`.
+* **✨ New:** Added support for collection group queries with `FirestoreAPI._isCollectionGroup`.z
 
 ## 0.0.1+5
 
