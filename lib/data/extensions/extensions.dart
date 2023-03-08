@@ -32,21 +32,21 @@ extension on Map {
   ///
   /// We may do this so we have access to a reference field in DTO's and models without actually having
   /// the reference field in Firestore.
-  Map<T, E> tryAddLocalReference<T, E>(
+  Map<T, E> tryAddLocalDocumentReference<T, E>(
     DocumentReference documentReference, {
     required String referenceFieldName,
-    required bool tryAddLocalReference,
+    required bool tryAddLocalDocumentReference,
   }) =>
-      tryAddLocalReference && containsKey(referenceFieldName)
+      tryAddLocalDocumentReference && containsKey(referenceFieldName)
           ? this as Map<T, E>
           : (this..[referenceFieldName] = documentReference) as Map<T, E>;
 
   /// Used to try and remove a local [FirestoreAPI._referenceFieldName] field.
-  Map<T, E> tryRemoveLocalReference<T, E>({
+  Map<T, E> tryRemoveLocalDocumentReference<T, E>({
     required String referenceFieldName,
-    required bool tryRemoveLocalReference,
+    required bool tryRemoveLocalDocumentReference,
   }) =>
-      tryRemoveLocalReference && containsKey(referenceFieldName)
+      tryRemoveLocalDocumentReference && containsKey(referenceFieldName)
           ? (this..remove(referenceFieldName)) as Map<T, E>
           : this as Map<T, E>;
 

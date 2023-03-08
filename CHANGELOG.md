@@ -1,3 +1,7 @@
+## 0.0.6
+
+* **⚠️ Breaking:** Rename local document reference fields to DocumentReference instead of reference.
+
 ## 0.0.5
 
 * **✨ New:** Added support for adding local `DocumentReference` to your DTO's. Much the like local id, this will add a local `DocumentReference` to your data and remove it again when saving to firestore. This way you can keep your database clean but still have access to the local id and reference as often needed.
