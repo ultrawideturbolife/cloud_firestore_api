@@ -1,6 +1,6 @@
 name: cloud_firestore_api
 description: A clean and efficient approach to dealing with data from Firestore.
-version: 0.0.3+1
+version: 0.0.4
 homepage: https://github.com/codaveto/cloud_firestore_api
 
 environment:

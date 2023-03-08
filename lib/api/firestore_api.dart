@@ -15,8 +15,7 @@ import 'package:cloud_firestore_api/data/models/feedback_config.dart';
 part 'package:cloud_firestore_api/data/extensions/extensions.dart';
 
 typedef CollectionReferenceQuery<T> = Query<T> Function(
-    CollectionReference<T> collectionReference);
-typedef CollectionGroupQuery<T> = Query<T> Function(Query<T> collectionGroup);
+    Query<T> collectionReference);
 
 /// Used to perform all Firestore related CRUD tasks and a little bit more.
 class FirestoreAPI<T extends Object> {
@@ -113,13 +112,21 @@ class FirestoreAPI<T extends Object> {
   /// and [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
   Future<FeedbackResponse<Map<String, dynamic>>> findById({
     required String id,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     try {
-      _log.info('🔥 Finding ${_collectionPath()} '
+      _log.info('🔥 Finding ${collectionPathOverride ?? _collectionPath()} '
           'without converter, '
           'id: $id..');
       final result = (await findDocRef(
         id: id,
+        collectionPathOverride: collectionPathOverride,
       ).get())
           .data();
       if (result != null) {
@@ -155,12 +162,23 @@ class FirestoreAPI<T extends Object> {
   /// the [findById] method instead.
   Future<FeedbackResponse<T>> findByIdWithConverter({
     required String id,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     try {
-      _log.info('🔥 Finding ${_collectionPath()} '
+      _log.info('🔥 Finding ${collectionPathOverride ?? _collectionPath()} '
           'with converter, '
           'id: $id..');
-      final result = (await findDocRefWithConverter(id: id).get()).data();
+      final result = (await findDocRefWithConverter(
+        id: id,
+        collectionPathOverride: collectionPathOverride,
+      ).get())
+          .data();
       if (result != null) {
         _log.success('🔥 Found item!');
         return _responseConfig.searchSuccessResponse(
@@ -207,7 +225,7 @@ class FirestoreAPI<T extends Object> {
           'searchTermType: ${searchTermType.name} and '
           'limit: $limit..');
       collectionReferenceQuery(
-              CollectionReference<Map<String, dynamic>> collectionReference) =>
+              Query<Map<String, dynamic>> collectionReference) =>
           searchTermType.isArray
               ? limit == null
                   ? collectionReference.where(
@@ -244,8 +262,7 @@ class FirestoreAPI<T extends Object> {
           final numberSearchTerm = double.tryParse(searchTerm);
           if (numberSearchTerm != null) {
             collectionReferenceQuery(
-                    CollectionReference<Map<String, dynamic>>
-                        collectionReference) =>
+                    Query<Map<String, dynamic>> collectionReference) =>
                 searchTermType.isArray
                     ? limit == null
                         ? collectionReference.where(
@@ -335,7 +352,7 @@ class FirestoreAPI<T extends Object> {
           'searchField: $searchField, '
           'searchTermType: ${searchTermType.name} and '
           'limit: $limit..');
-      collectionReferenceQuery(CollectionReference<T> collectionReference) =>
+      collectionReferenceQuery(Query<T> collectionReference) =>
           searchTermType.isArray
               ? limit == null
                   ? collectionReference.where(
@@ -369,8 +386,7 @@ class FirestoreAPI<T extends Object> {
         try {
           final numberSearchTerm = double.tryParse(searchTerm);
           if (numberSearchTerm != null) {
-            collectionReferenceQuery(
-                    CollectionReference<T> collectionReference) =>
+            collectionReferenceQuery(Query<T> collectionReference) =>
                 searchTermType.isArray
                     ? limit == null
                         ? collectionReference.where(
@@ -626,7 +642,14 @@ class FirestoreAPI<T extends Object> {
     bool addIdAsField = false,
     bool removeLocalId = false,
     List<FieldPath>? mergeFields,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     try {
       _log.info('🔥 Checking if writeable is valid..');
       final isValidResponse = writeable.isValidResponse();
@@ -634,7 +657,7 @@ class FirestoreAPI<T extends Object> {
         _log.success('🔥 Writeable is valid!');
         _log.info(
           '🔥 '
-          'Creating ${_collectionPath()} document with '
+          'Creating ${collectionPathOverride ?? _collectionPath()} document with '
           'writeable: $writeable, '
           'id: $id, '
           'writeBatch: $writeBatch, '
@@ -654,6 +677,9 @@ class FirestoreAPI<T extends Object> {
             createTimeStampType: createTimeStampType,
             updateTimeStampType: updateTimeStampType,
             addIdAsField: addIdAsField,
+            collectionPathOverride: collectionPathOverride,
+            merge: merge,
+            mergeFields: mergeFields,
           );
           _log.info('🔥 Checking if batchCreate was successful..');
           if (lastBatchResponse.isSuccess) {
@@ -668,8 +694,14 @@ class FirestoreAPI<T extends Object> {
           }
         } else {
           _log.info('🔥 WriteBatch was null! Creating without batch..');
-          documentReference =
-              id != null ? findDocRef(id: id) : findCollection().doc();
+          documentReference = id != null
+              ? findDocRef(
+                  id: id,
+                  collectionPathOverride: collectionPathOverride,
+                )
+              : _firebaseFirestore
+                  .collection(collectionPathOverride ?? _collectionPath())
+                  .doc();
           _log.value(documentReference.id, '🔥 Document ID');
           _log.info('🔥 Creating JSON..');
           final writeableAsJson = (merge || mergeFields != null) &&
@@ -703,15 +735,19 @@ class FirestoreAPI<T extends Object> {
         }
         _log.success('🔥 Setting data done!');
         return _responseConfig.createSuccessResponse(
-            isPlural: writeBatch != null, result: documentReference);
+          isPlural: writeBatch != null,
+          result: documentReference,
+        );
       }
       _log.warning('🔥 Writeable was invalid!');
       return FeedbackResponse.error(
-          title: isValidResponse.title, message: isValidResponse.message);
+        title: isValidResponse.title,
+        message: isValidResponse.message,
+      );
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to create ${_collectionPath()} document with '
+        'Unable to create ${collectionPathOverride ?? _collectionPath()} document with '
         'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
@@ -758,14 +794,21 @@ class FirestoreAPI<T extends Object> {
     bool merge = false,
     bool addIdAsField = false,
     List<FieldPath>? mergeFields,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     try {
       final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
         _log.info(
           '🔥 '
-          'Batch creating ${_collectionPath()} document with '
+          'Batch creating ${collectionPathOverride ?? _collectionPath()} document with '
           'writeable: $writeable, '
           'id: $id, '
           'writeBatch: $writeBatch, '
@@ -776,8 +819,11 @@ class FirestoreAPI<T extends Object> {
           'mergeFields: $mergeFields..',
         );
         final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
-        final documentReference =
-            id != null ? findDocRef(id: id) : findCollection().doc();
+        final documentReference = id != null
+            ? findDocRef(id: id, collectionPathOverride: collectionPathOverride)
+            : _firebaseFirestore
+                .collection(collectionPathOverride ?? _collectionPath())
+                .doc();
         _log.value(documentReference.id, '🔥 Document ID');
         _log.info('🔥 Creating JSON..');
         final writeableAsJson = (merge || mergeFields != null) &&
@@ -822,7 +868,7 @@ class FirestoreAPI<T extends Object> {
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to create ${_collectionPath()} document with '
+        'Unable to create ${collectionPathOverride ?? _collectionPath()} document with '
         'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
@@ -851,14 +897,21 @@ class FirestoreAPI<T extends Object> {
     required String id,
     WriteBatch? writeBatch,
     TimestampType timestampType = TimestampType.updated,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     try {
       _log.info('🔥 Checking if writeable is valid..');
       final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
         _log.info('🔥 '
-            'Updating ${_collectionPath()} document with '
+            'Updating ${collectionPathOverride ?? _collectionPath()} document with '
             'writeable: $writeable, '
             'id: $id, '
             'writeBatch: $writeBatch, '
@@ -871,6 +924,7 @@ class FirestoreAPI<T extends Object> {
             id: id,
             writeBatch: writeBatch,
             timestampType: timestampType,
+            collectionPathOverride: collectionPathOverride,
           );
           _log.info('🔥 Checking if batchUpdate was successful..');
           if (lastBatchResponse.isSuccess) {
@@ -885,7 +939,8 @@ class FirestoreAPI<T extends Object> {
           }
         } else {
           _log.info('🔥 WriteBatch was null! Updating without batch..');
-          documentReference = findDocRef(id: id);
+          documentReference = findDocRef(
+              id: id, collectionPathOverride: collectionPathOverride);
           _log.value(documentReference.id, '🔥 Document ID');
           _log.info('🔥 Creating JSON..');
           final writeableAsJson = timestampType.add(
@@ -899,15 +954,19 @@ class FirestoreAPI<T extends Object> {
         }
         _log.success('🔥 Updating data done!');
         return _responseConfig.updateSuccessResponse(
-            isPlural: writeBatch != null, result: documentReference);
+          isPlural: writeBatch != null,
+          result: documentReference,
+        );
       }
       _log.warning('🔥 Writeable was invalid!');
       return FeedbackResponse.error(
-          title: isValidResponse.title, message: isValidResponse.message);
+        title: isValidResponse.title,
+        message: isValidResponse.message,
+      );
     } catch (error, stackTrace) {
       _log.error(
         '🔥 '
-        'Unable to update ${_collectionPath()} document with '
+        'Unable to update ${collectionPathOverride ?? _collectionPath()} document with '
         'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
@@ -932,12 +991,20 @@ class FirestoreAPI<T extends Object> {
     required String id,
     WriteBatch? writeBatch,
     TimestampType timestampType = TimestampType.updated,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     final isValidResponse = writeable.isValidResponse();
     try {
       if (isValidResponse.isSuccess) {
         _log.success('🔥 Writeable is valid!');
-        _log.info('🔥 Batch updating ${_collectionPath()} document with '
+        _log.info(
+            '🔥 Batch updating ${collectionPathOverride ?? _collectionPath()} document with '
             'writeable: $writeable, '
             'id: $id, '
             'writeBatch: $writeBatch, '
@@ -986,9 +1053,17 @@ class FirestoreAPI<T extends Object> {
   Future<FeedbackResponse<void>> delete({
     required String id,
     WriteBatch? writeBatch,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     try {
-      _log.info('🔥 Deleting ${_collectionPath()} document with '
+      _log.info(
+          '🔥 Deleting ${collectionPathOverride ?? _collectionPath()} document with '
           'id: $id, '
           'writeBatch: $writeBatch..');
       final DocumentReference documentReference;
@@ -997,6 +1072,7 @@ class FirestoreAPI<T extends Object> {
         final lastBatchResponse = await batchDelete(
           id: id,
           writeBatch: writeBatch,
+          collectionPathOverride: collectionPathOverride,
         );
         _log.info('🔥 Checking if batchDelete was successful..');
         if (lastBatchResponse.isSuccess) {
@@ -1011,7 +1087,8 @@ class FirestoreAPI<T extends Object> {
         }
       } else {
         _log.info('🔥 WriteBatch was null! Deleting without batch..');
-        documentReference = findDocRef(id: id);
+        documentReference =
+            findDocRef(id: id, collectionPathOverride: collectionPathOverride);
         _log.value(documentReference.id, '🔥 Document ID');
         _log.info('🔥 Deleting data with documentReference.delete..');
         await documentReference.delete();
@@ -1020,8 +1097,10 @@ class FirestoreAPI<T extends Object> {
       return _responseConfig.deleteSuccessResponse(
           isPlural: writeBatch != null);
     } catch (error, stackTrace) {
-      _log.error('🔥 Unable to update ${_collectionPath()} document',
-          error: error, stackTrace: stackTrace);
+      _log.error(
+          '🔥 Unable to update ${collectionPathOverride ?? _collectionPath()} document',
+          error: error,
+          stackTrace: stackTrace);
       return _responseConfig.deleteFailedResponse(isPlural: writeBatch != null);
     }
   }
@@ -1033,13 +1112,22 @@ class FirestoreAPI<T extends Object> {
   Future<FeedbackResponse<WriteBatchWithReference?>> batchDelete({
     required String id,
     WriteBatch? writeBatch,
+    String? collectionPathOverride,
   }) async {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     try {
-      _log.info('🔥 Batch deleting ${_collectionPath()} document with '
+      _log.info(
+          '🔥 Batch deleting ${collectionPathOverride ?? _collectionPath()} document with '
           'id: $id, '
           'writeBatch: $writeBatch..');
       final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
-      final documentReference = findDocRef(id: id);
+      final documentReference =
+          findDocRef(id: id, collectionPathOverride: collectionPathOverride);
       _log.value(documentReference.id, '🔥 Document ID');
       _log.info('🔥 Deleting data with writeBatch.delete..');
       nullSafeWriteBatch.delete(documentReference);
@@ -1053,7 +1141,7 @@ class FirestoreAPI<T extends Object> {
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to batch delete ${_collectionPath()} document with id: $id',
+        '🔥 Unable to batch delete ${collectionPathOverride ?? _collectionPath()} document with id: $id',
         error: error,
         stackTrace: stackTrace,
       );
@@ -1072,48 +1160,23 @@ class FirestoreAPI<T extends Object> {
   ///
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findCollection] method instead.
-  CollectionReference<T> findCollectionWithConverter() {
+  Query<T> findCollectionWithConverter() {
     _log.info(
         '🔥 Finding ${_collectionPath()} CollectionReference with converter..');
-    return _firebaseFirestore.collection(_collectionPath()).withConverter<T>(
-          fromFirestore: _tryAddLocalId
-              ? (snapshot, _) => _fromJson!(
-                    (snapshot.data() ?? {}).tryAddLocalId(
-                      snapshot.id,
-                      idFieldName: _idFieldName,
-                    ),
-                  )
-              : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
-          toFirestore: (value, _) => _toJson!(value),
-        );
-  }
-
-  /// Finds a [Query] of type [T] based on specified [_collectionPath].
-  ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
-  /// will not now how to convert the data to [T].
-  ///
-  /// If [_tryAddLocalId] is true then your data will also contain a local id field based
-  /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
-  /// have easy access to the document id at any time.
-  ///
-  /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
-  /// using the [findCollectionGroup] method instead.
-  Query<T> findCollectionGroupWithConverter() {
-    _log.info('🔥 Finding ${_collectionPath()} Query with converter..');
-    return _firebaseFirestore
-        .collectionGroup(_collectionPath())
+    return (_isCollectionGroup
+            ? _firebaseFirestore.collectionGroup(_collectionPath())
+            : _firebaseFirestore.collection(_collectionPath()))
         .withConverter<T>(
-          fromFirestore: _tryAddLocalId
-              ? (snapshot, _) => _fromJson!(
-                    (snapshot.data() ?? {}).tryAddLocalId(
-                      snapshot.id,
-                      idFieldName: _idFieldName,
-                    ),
-                  )
-              : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
-          toFirestore: (value, _) => _toJson!(value),
-        );
+      fromFirestore: _tryAddLocalId
+          ? (snapshot, _) => _fromJson!(
+                (snapshot.data() ?? {}).tryAddLocalId(
+                  snapshot.id,
+                  idFieldName: _idFieldName,
+                ),
+              )
+          : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
+      toFirestore: (value, _) => _toJson!(value),
+    );
   }
 
   /// Finds a [DocumentReference] of type [T] based on given [id].
@@ -1127,10 +1190,21 @@ class FirestoreAPI<T extends Object> {
   ///
   /// If you rather want to retrieve data in the raw form of a Map<String, dynamic> consider
   /// using the [findDocRef] method instead.
-  DocumentReference<T> findDocRefWithConverter({required String id}) {
+  DocumentReference<T> findDocRefWithConverter({
+    required String id,
+    String? collectionPathOverride,
+  }) {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     _log.info(
-        '🔥 Finding ${_collectionPath()} DocumentReference with converter and id: $id..');
-    return _firebaseFirestore.doc('${_collectionPath()}/$id').withConverter<T>(
+        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference with converter and id: $id..');
+    return _firebaseFirestore
+        .doc('${collectionPathOverride ?? _collectionPath()}/$id')
+        .withConverter<T>(
           fromFirestore: _tryAddLocalId
               ? (snapshot, _) => _fromJson!(
                     (snapshot.data() ?? {}).tryAddLocalId(
@@ -1156,10 +1230,20 @@ class FirestoreAPI<T extends Object> {
   /// using the [findDocSnapshot] method instead.
   Future<DocumentSnapshot<T>> findDocSnapshotWithConverter({
     required String id,
+    String? collectionPathOverride,
   }) async {
-    final docRefWithConverter = findDocRefWithConverter(id: id);
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
+    final docRefWithConverter = findDocRefWithConverter(
+      id: id,
+      collectionPathOverride: collectionPathOverride,
+    );
     _log.info(
-        '🔥 Finding ${_collectionPath()} DocumentSnapshot with converter and id: $id..');
+        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentSnapshot with converter and id: $id..');
     return docRefWithConverter.get();
   }
 
@@ -1177,13 +1261,9 @@ class FirestoreAPI<T extends Object> {
   Stream<List<T>> findStreamWithConverter() {
     _log.info(
         '🔥 Finding ${_collectionPath()} Collection Stream with converter..');
-    return !_isCollectionGroup
-        ? findCollectionWithConverter().snapshots().map(
-              (event) => event.docs.map((e) => e.data()).toList(),
-            )
-        : findCollectionGroupWithConverter().snapshots().map(
-              (event) => event.docs.map((e) => e.data()).toList(),
-            );
+    return findCollectionWithConverter().snapshots().map(
+          (event) => event.docs.map((e) => e.data()).toList(),
+        );
   }
 
   /// Finds a [Stream] of list of [T] based on given [collectionReferenceQuery] and [whereDescription].
@@ -1199,24 +1279,15 @@ class FirestoreAPI<T extends Object> {
   /// using the [findStreamByQuery] method instead.
   Stream<List<T>> findStreamByQueryWithConverter({
     CollectionReferenceQuery<T>? collectionReferenceQuery,
-    CollectionGroupQuery<T>? collectionGroupQuery,
     required String whereDescription,
   }) {
-    assert((collectionGroupQuery != null) == _isCollectionGroup,
-        'Use a collectionGroupQuery when working with a collection group.');
     _log.info(
         '🔥 Finding ${_collectionPath()} Stream with converter where $whereDescription..');
-    return !_isCollectionGroup
-        ? collectionReferenceQuery!(findCollectionWithConverter())
-            .snapshots()
-            .map(
-              (event) => event.docs.map((e) => e.data()).toList(),
-            )
-        : collectionGroupQuery!(findCollectionGroupWithConverter())
-            .snapshots()
-            .map(
-              (event) => event.docs.map((e) => e.data()).toList(),
-            );
+    return collectionReferenceQuery!(findCollectionWithConverter())
+        .snapshots()
+        .map(
+          (event) => event.docs.map((e) => e.data()).toList(),
+        );
   }
 
   /// Finds a [Stream] of type [T] based on given [id].
@@ -1232,10 +1303,20 @@ class FirestoreAPI<T extends Object> {
   /// using the [findDocStream] method instead.
   Stream<T?> findDocStreamWithConverter({
     required String id,
+    String? collectionPathOverride,
   }) {
-    final docRefWithConverter = findDocRefWithConverter(id: id);
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
+    final docRefWithConverter = findDocRefWithConverter(
+      id: id,
+      collectionPathOverride: collectionPathOverride,
+    );
     _log.info(
-        '🔥 Finding ${_collectionPath()} DocumentReference Stream with converter and id: $id..');
+        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference Stream with converter and id: $id..');
     return docRefWithConverter.snapshots().map((e) => e.data());
   }
 
@@ -1246,43 +1327,22 @@ class FirestoreAPI<T extends Object> {
   ///
   /// If you rather want to retrieve data in the form of [T] consider
   /// using the [findCollectionWithConverter] method instead.
-  CollectionReference<Map<String, dynamic>> findCollection() {
+  Query<Map<String, dynamic>> findCollection() {
     _log.info(
         '🔥 Finding ${_collectionPath()} CollectionReference without converter..');
     return _tryAddLocalId
-        ? _firebaseFirestore
-            .collection(_collectionPath())
+        ? (_isCollectionGroup
+                ? _firebaseFirestore.collectionGroup(_collectionPath())
+                : _firebaseFirestore.collection(_collectionPath()))
             .withConverter<Map<String, dynamic>>(
-              fromFirestore: (snapshot, _) =>
-                  (snapshot.data() ?? {}).tryAddLocalId(
-                snapshot.id,
-                idFieldName: _idFieldName,
-              ),
-              toFirestore: (value, _) => value,
-            )
+            fromFirestore: (snapshot, _) =>
+                (snapshot.data() ?? {}).tryAddLocalId(
+              snapshot.id,
+              idFieldName: _idFieldName,
+            ),
+            toFirestore: (value, _) => value,
+          )
         : _firebaseFirestore.collection(_collectionPath());
-  }
-
-  /// Finds a [Query] of type Map<String, dynamic> based on specified [_collectionPath].
-  ///
-  /// If [_tryAddLocalId] is true then your data will also contain a local id field based
-  /// on the [_idFieldName] specified in the constructor.
-  ///
-  /// If you rather want to retrieve data in the form of [T] consider
-  /// using the [findCollectionGroupWithConverter] method instead.
-  Query<Map<String, dynamic>> findCollectionGroup() {
-    _log.info('🔥 Finding ${_collectionPath()} Query with converter..');
-    return _firebaseFirestore
-        .collectionGroup(_collectionPath())
-        .withConverter<Map<String, dynamic>>(
-          fromFirestore: _tryAddLocalId
-              ? (snapshot, _) => (snapshot.data() ?? {}).tryAddLocalId(
-                    snapshot.id,
-                    idFieldName: _idFieldName,
-                  )
-              : (snapshot, _) => (snapshot.data() ?? {}),
-          toFirestore: (value, _) => value,
-        );
   }
 
   /// Finds a [DocumentReference] of type Map<String, dynamic> based on given [id].
@@ -1295,12 +1355,19 @@ class FirestoreAPI<T extends Object> {
   /// [findDocRefWithConverter] method instead.
   DocumentReference<Map<String, dynamic>> findDocRef({
     required String id,
+    String? collectionPathOverride,
   }) {
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
     _log.info(
-        '🔥 Finding ${_collectionPath()} DocumentReference without converter and id: $id..');
+        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference without converter and id: $id..');
     return _tryAddLocalId
         ? _firebaseFirestore
-            .doc('${_collectionPath()}/$id')
+            .doc('${collectionPathOverride ?? _collectionPath()}/$id')
             .withConverter<Map<String, dynamic>>(
               fromFirestore: (snapshot, _) =>
                   (snapshot.data() ?? {}).tryAddLocalId(
@@ -1309,7 +1376,8 @@ class FirestoreAPI<T extends Object> {
               ),
               toFirestore: (value, _) => value,
             )
-        : _firebaseFirestore.doc('${_collectionPath()}/$id');
+        : _firebaseFirestore
+            .doc('${collectionPathOverride ?? _collectionPath()}/$id');
   }
 
   /// Finds a [DocumentSnapshot] of type Map<String, dynamic> based on given [id].
@@ -1325,10 +1393,18 @@ class FirestoreAPI<T extends Object> {
   /// [findDocSnapshotWithConverter] method instead.
   Future<DocumentSnapshot<Map<String, dynamic>>> findDocSnapshot({
     required String id,
+    String? collectionPathOverride,
   }) async {
-    final docRef = findDocRef(id: id);
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
+    final docRef =
+        findDocRef(id: id, collectionPathOverride: collectionPathOverride);
     _log.info(
-        '🔥 Finding ${_collectionPath()} DocumentSnapshot without converter and id: $id..');
+        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentSnapshot without converter and id: $id..');
     return docRef.get();
   }
 
@@ -1343,9 +1419,7 @@ class FirestoreAPI<T extends Object> {
   Stream<QuerySnapshot<Map<String, dynamic>>> findStream() {
     _log.info(
         '🔥 Finding ${_collectionPath()} CollectionReference Stream without converter..');
-    return !_isCollectionGroup
-        ? findCollection().snapshots()
-        : findCollectionGroup().snapshots();
+    return findCollection().snapshots();
   }
 
   /// Finds a [Stream] of List<Map<String, dynamic>> based on given [collectionReferenceQuery] and [whereDescription].
@@ -1359,20 +1433,13 @@ class FirestoreAPI<T extends Object> {
   Stream<List<Map<String, dynamic>>> findStreamByQuery({
     required CollectionReferenceQuery<Map<String, dynamic>>?
         collectionReferenceQuery,
-    CollectionGroupQuery<Map<String, dynamic>>? collectionGroupQuery,
     required String whereDescription,
   }) {
-    assert((collectionGroupQuery != null) == _isCollectionGroup,
-        'Use a collectionGroupQuery when working with a collection group.');
     _log.info(
         '🔥 Finding ${_collectionPath()} Stream without converter where $whereDescription..');
-    return !_isCollectionGroup
-        ? collectionReferenceQuery!(findCollection()).snapshots().map(
-              (event) => event.docs.map((e) => e.data()).toList(),
-            )
-        : collectionGroupQuery!(findCollectionGroup()).snapshots().map(
-              (event) => event.docs.map((e) => e.data()).toList(),
-            );
+    return collectionReferenceQuery!(findCollection()).snapshots().map(
+          (event) => event.docs.map((e) => e.data()).toList(),
+        );
   }
 
   /// Finds a [Stream] of type Map<String, dynamic> based on given [id].
@@ -1385,18 +1452,29 @@ class FirestoreAPI<T extends Object> {
   /// [findDocStreamWithConverter] method instead.
   Stream<DocumentSnapshot<Map<String, dynamic>>> findDocStream({
     required String id,
+    String? collectionPathOverride,
   }) {
-    final docRef = findDocRef(id: id);
+    final docRef =
+        findDocRef(id: id, collectionPathOverride: collectionPathOverride);
     _log.info(
-        '🔥 Finding ${_collectionPath()} DocumentReference Stream without converter and id: $id..');
+        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference Stream '
+        'without converter and id: $id..');
     return docRef.snapshots();
   }
 
   /// Used to determined if a document exists based on given [id].
   Future<bool> docExists({
     required String id,
+    String? collectionPathOverride,
   }) async {
-    final docRef = findDocRef(id: id);
+    assert(
+      _isCollectionGroup == (collectionPathOverride != null),
+      'Firestore does not support finding a document by id when communicating with a collection group, '
+      'therefore, you must specify the collectionPathOverride containing all parent collection and document ids '
+      'in order to make this method work.',
+    );
+    final docRef =
+        findDocRef(id: id, collectionPathOverride: collectionPathOverride);
     _log.info('🔥 Checking if document exists with id: $id');
     return (await docRef.get()).exists;
   }

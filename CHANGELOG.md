@@ -1,3 +1,7 @@
+## 0.0.4
+
+* **✨ New:** Added improved support for collection group queries. All regular methods now perform distinct collection group logic if `FirestoreAPI.isCollectionGroup` (in constructor) is true. Keep in mind that methods that work with specific document ids will require you to provide a `collectionPathOverride` due to Firestore limitations.
+
 ## 0.0.3+1
 
 * **🐛️ Bugfix:** Fixed bug where search term search with numbers enables was not returning the right results.
