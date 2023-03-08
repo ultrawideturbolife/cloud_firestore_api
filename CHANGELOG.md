@@ -1,3 +1,7 @@
+## 0.0.5
+
+* **✨ New:** Added support for adding local `DocumentReference` to your DTO's. Much the like local id, this will add a local `DocumentReference` to your data and remove it again when saving to firestore. This way you can keep your database clean but still have access to the local id and reference as often needed.
+
 ## 0.0.4
 
 * **✨ New:** Added improved support for collection group queries. All regular methods now perform distinct collection group logic if `FirestoreAPI.isCollectionGroup` (in constructor) is true. Keep in mind that methods that work with specific document ids will require you to provide a `collectionPathOverride` due to Firestore limitations.

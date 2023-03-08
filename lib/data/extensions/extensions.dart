@@ -28,28 +28,49 @@ extension on TimestampType {
 }
 
 extension on Map {
+  /// Used to try and add a local [FirestoreAPI._referenceFieldName] field.
+  ///
+  /// We may do this so we have access to a reference field in DTO's and models without actually having
+  /// the reference field in Firestore.
+  Map<T, E> tryAddLocalReference<T, E>(
+    DocumentReference documentReference, {
+    required String referenceFieldName,
+    required bool tryAddLocalReference,
+  }) =>
+      tryAddLocalReference && containsKey(referenceFieldName)
+          ? this as Map<T, E>
+          : (this..[referenceFieldName] = documentReference) as Map<T, E>;
+
+  /// Used to try and remove a local [FirestoreAPI._referenceFieldName] field.
+  Map<T, E> tryRemoveLocalReference<T, E>({
+    required String referenceFieldName,
+    required bool tryRemoveLocalReference,
+  }) =>
+      tryRemoveLocalReference && containsKey(referenceFieldName)
+          ? (this..remove(referenceFieldName)) as Map<T, E>
+          : this as Map<T, E>;
+
   /// Used to try and add a local [FirestoreAPI._idFieldName] field.
   ///
   /// We may do this so we have access to an id field in DTO's and models without actually having
   /// an ID field in Firestore.
-  Map<T, E> tryAddLocalId<T, E>(String id, {required String idFieldName}) =>
-      containsKey(idFieldName)
+  Map<T, E> tryAddLocalId<T, E>(
+    String id, {
+    required String idFieldName,
+    required bool tryAddLocalId,
+  }) =>
+      tryAddLocalId && containsKey(idFieldName)
           ? this as Map<T, E>
           : (this..[idFieldName] = id) as Map<T, E>;
 
   /// Used to try and remove a local [FirestoreAPI._idFieldName] field.
-  Map<T, E> tryRemoveLocalId<T, E>({required String idFieldName}) =>
-      containsKey(idFieldName)
+  Map<T, E> tryRemoveLocalId<T, E>({
+    required String idFieldName,
+    required bool tryRemoveLocalId,
+  }) =>
+      tryRemoveLocalId && containsKey(idFieldName)
           ? (this..remove(idFieldName)) as Map<T, E>
           : this as Map<T, E>;
-
-  /// Used to add a [FirestoreAPI._idFieldName] to a map.
-  ///
-  /// We may use this to automatically add [FirestoreAPI._idFieldName] fields to our Firestore
-  /// data when saving the documents. Some may consider this a bad practice so be cautious using
-  /// this.
-  Map<T, E> withId<T, E>(String id, {required String idFieldName}) =>
-      (this..[idFieldName] = id) as Map<T, E>;
 
   /// Used to add a [FirestoreAPI._updatedFieldName] to a map.
   ///

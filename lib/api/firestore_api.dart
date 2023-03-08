@@ -48,7 +48,9 @@ class FirestoreAPI<T extends Object> {
     String createdFieldName = 'created',
     String updatedFieldName = 'updated',
     String idFieldName = 'id',
+    String referenceFieldName = 'reference',
     bool isCollectionGroup = false,
+    bool tryAddLocalReference = false,
   })  : _firebaseFirestore = firebaseFirestore,
         _collectionPath = collectionPath,
         _toJson = toJson,
@@ -59,7 +61,9 @@ class FirestoreAPI<T extends Object> {
         _createdFieldName = createdFieldName,
         _updatedFieldName = updatedFieldName,
         _idFieldName = idFieldName,
-        _isCollectionGroup = isCollectionGroup;
+        _referenceFieldName = referenceFieldName,
+        _isCollectionGroup = isCollectionGroup,
+        _tryAddLocalReference = tryAddLocalReference;
 
   /// Used to performs Firestore operations.
   final FirebaseFirestore _firebaseFirestore;
@@ -81,6 +85,14 @@ class FirestoreAPI<T extends Object> {
   /// default try te remove the field again before writing to Firestore (unless specified otherwise).
   final bool _tryAddLocalId;
 
+  /// Used to add a [DocumentReference] field to any of your local Firestore data (so not actually in Firestore).
+  ///
+  /// If this is true then your data will have an id field added based on the [_idFieldName]
+  /// specified in the constructor. Add this id field to the model you're deserializing to and you
+  /// will have easy access to the document id at any time. Any create or update method will by
+  /// default try te remove the field again before writing to Firestore (unless specified otherwise).
+  final bool _tryAddLocalReference;
+
   /// Used to create responses from the configured [FeedbackConfig].
   final ResponseGenerator _responseConfig;
 
@@ -97,6 +109,11 @@ class FirestoreAPI<T extends Object> {
   ///
   /// May also be used to provide an id field to your data from Firestore when fetching data.
   final String _idFieldName;
+
+  /// Used to provide a reference field to your create/update methods if necessary.
+  ///
+  /// May also be used to provide an id field to your data from Firestore when fetching data.
+  final String _referenceFieldName;
 
   /// Whether the [_collectionPath] refers to a collection group.
   final bool _isCollectionGroup;
@@ -157,6 +174,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the raw form of a Map<String, dynamic> consider using
   /// the [findById] method instead.
@@ -336,6 +357,10 @@ class FirestoreAPI<T extends Object> {
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
   ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
+  ///
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findBySearchTerm] method instead.
   Future<FeedbackResponse<List<T>>> findBySearchTermWithConverter({
@@ -504,6 +529,10 @@ class FirestoreAPI<T extends Object> {
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
   ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
+  ///
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findByQuery] method instead.
   Future<FeedbackResponse<List<T>>> findByQueryWithConverter({
@@ -576,6 +605,10 @@ class FirestoreAPI<T extends Object> {
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
   ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
+  ///
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findAll] method instead.
   Future<FeedbackResponse<List<T>>> findAllWithConverter() async {
@@ -625,12 +658,6 @@ class FirestoreAPI<T extends Object> {
   /// When [merge] is true this method will attempt an upsert if the document exists. If the
   /// document does not exist it will default to a regular create.
   ///
-  /// If [addIdAsField] is true it will automatically add the ID (given as [id] or generated) as a
-  /// field to your document. The field name will be what's specified in [_idFieldName].
-  ///
-  /// If [removeLocalId] is true and [addIdAsField] is false, then it will attempt to remove any
-  /// local [_idFieldName] from the [writeable].
-  ///
   /// The [mergeFields] determine which fields to upsert, leave blank to upsert the entire object.
   Future<FeedbackResponse<DocumentReference>> create({
     required Writeable writeable,
@@ -639,8 +666,6 @@ class FirestoreAPI<T extends Object> {
     TimestampType createTimeStampType = TimestampType.createdAndUpdated,
     TimestampType updateTimeStampType = TimestampType.updated,
     bool merge = false,
-    bool addIdAsField = false,
-    bool removeLocalId = false,
     List<FieldPath>? mergeFields,
     String? collectionPathOverride,
   }) async {
@@ -664,7 +689,6 @@ class FirestoreAPI<T extends Object> {
           'createTimeStampType: ${createTimeStampType.name}, '
           'updateTimeStampType: ${updateTimeStampType.name}, '
           'merge: $merge, '
-          'addIdAsAField: $addIdAsField, '
           'mergeFields: $mergeFields..',
         );
         final DocumentReference documentReference;
@@ -676,7 +700,6 @@ class FirestoreAPI<T extends Object> {
             writeBatch: writeBatch,
             createTimeStampType: createTimeStampType,
             updateTimeStampType: updateTimeStampType,
-            addIdAsField: addIdAsField,
             collectionPathOverride: collectionPathOverride,
             merge: merge,
             mergeFields: mergeFields,
@@ -715,14 +738,6 @@ class FirestoreAPI<T extends Object> {
                   createdFieldName: _createdFieldName,
                   updatedFieldName: _updatedFieldName,
                 );
-          if (addIdAsField) {
-            writeableAsJson.withId(
-              documentReference.id,
-              idFieldName: _idFieldName,
-            );
-          } else if (removeLocalId) {
-            writeableAsJson.tryRemoveLocalId(idFieldName: _idFieldName);
-          }
           _log.value(writeableAsJson, '🔥 JSON');
           _log.info('🔥 Setting data with documentReference.set..');
           await documentReference.set(
@@ -754,7 +769,6 @@ class FirestoreAPI<T extends Object> {
         'createTimeStampType: ${createTimeStampType.name}, '
         'updateTimeStampType: ${updateTimeStampType.name}, '
         'merge: $merge, '
-        'addIdAsAField: $addIdAsField, '
         'mergeFields: $mergeFields..',
         error: error,
         stackTrace: stackTrace,
@@ -792,7 +806,6 @@ class FirestoreAPI<T extends Object> {
     TimestampType createTimeStampType = TimestampType.createdAndUpdated,
     TimestampType updateTimeStampType = TimestampType.updated,
     bool merge = false,
-    bool addIdAsField = false,
     List<FieldPath>? mergeFields,
     String? collectionPathOverride,
   }) async {
@@ -815,7 +828,6 @@ class FirestoreAPI<T extends Object> {
           'createTimeStampType: ${createTimeStampType.name}, '
           'updateTimeStampType: ${updateTimeStampType.name}, '
           'merge: $merge, '
-          'addIdAsAField: $addIdAsField, '
           'mergeFields: $mergeFields..',
         );
         final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
@@ -837,12 +849,6 @@ class FirestoreAPI<T extends Object> {
                 createdFieldName: _createdFieldName,
                 updatedFieldName: _updatedFieldName,
               );
-        if (addIdAsField) {
-          writeableAsJson.withId(
-            documentReference.id,
-            idFieldName: _idFieldName,
-          );
-        }
         _log.value(writeableAsJson, '🔥 JSON');
         _log.info('🔥 Setting data with writeBatch.set..');
         nullSafeWriteBatch.set(
@@ -875,7 +881,6 @@ class FirestoreAPI<T extends Object> {
         'createTimeStampType: ${createTimeStampType.name}, '
         'updateTimeStampType: ${updateTimeStampType.name}, '
         'merge: $merge, '
-        'addIdAsAField: $addIdAsField, '
         'mergeFields: $mergeFields..',
         error: error,
         stackTrace: stackTrace,
@@ -1158,6 +1163,10 @@ class FirestoreAPI<T extends Object> {
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
   ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
+  ///
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findCollection] method instead.
   Query<T> findCollectionWithConverter() {
@@ -1167,15 +1176,28 @@ class FirestoreAPI<T extends Object> {
             ? _firebaseFirestore.collectionGroup(_collectionPath())
             : _firebaseFirestore.collection(_collectionPath()))
         .withConverter<T>(
-      fromFirestore: _tryAddLocalId
-          ? (snapshot, _) => _fromJson!(
-                (snapshot.data() ?? {}).tryAddLocalId(
-                  snapshot.id,
-                  idFieldName: _idFieldName,
-                ),
-              )
-          : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
-      toFirestore: (value, _) => _toJson!(value),
+      fromFirestore: (snapshot, _) => _fromJson!(
+        (snapshot.data() ?? {})
+            .tryAddLocalId(
+              snapshot.id,
+              idFieldName: _idFieldName,
+              tryAddLocalId: _tryAddLocalId,
+            )
+            .tryAddLocalReference(
+              snapshot.reference,
+              referenceFieldName: _referenceFieldName,
+              tryAddLocalReference: _tryAddLocalReference,
+            ),
+      ),
+      toFirestore: (value, _) => _toJson!(value)
+          .tryRemoveLocalId(
+            idFieldName: _idFieldName,
+            tryRemoveLocalId: _tryAddLocalId,
+          )
+          .tryRemoveLocalReference(
+            referenceFieldName: _referenceFieldName,
+            tryRemoveLocalReference: _tryAddLocalReference,
+          ),
     );
   }
 
@@ -1187,6 +1209,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the raw form of a Map<String, dynamic> consider
   /// using the [findDocRef] method instead.
@@ -1205,15 +1231,28 @@ class FirestoreAPI<T extends Object> {
     return _firebaseFirestore
         .doc('${collectionPathOverride ?? _collectionPath()}/$id')
         .withConverter<T>(
-          fromFirestore: _tryAddLocalId
-              ? (snapshot, _) => _fromJson!(
-                    (snapshot.data() ?? {}).tryAddLocalId(
-                      snapshot.id,
-                      idFieldName: _idFieldName,
-                    ),
-                  )
-              : (snapshot, _) => _fromJson!((snapshot.data() ?? {})),
-          toFirestore: (value, _) => _toJson!(value),
+          fromFirestore: (snapshot, _) => _fromJson!(
+            (snapshot.data() ?? {})
+                .tryAddLocalId(
+                  snapshot.id,
+                  idFieldName: _idFieldName,
+                  tryAddLocalId: _tryAddLocalId,
+                )
+                .tryAddLocalReference(
+                  snapshot.reference,
+                  referenceFieldName: _referenceFieldName,
+                  tryAddLocalReference: _tryAddLocalReference,
+                ),
+          ),
+          toFirestore: (value, _) => _toJson!(value)
+              .tryRemoveLocalId(
+                idFieldName: _idFieldName,
+                tryRemoveLocalId: _tryAddLocalId,
+              )
+              .tryRemoveLocalReference(
+                referenceFieldName: _referenceFieldName,
+                tryRemoveLocalReference: _tryAddLocalReference,
+              ),
         );
   }
 
@@ -1225,6 +1264,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the raw form of a Map<String, dynamic> consider
   /// using the [findDocSnapshot] method instead.
@@ -1256,6 +1299,10 @@ class FirestoreAPI<T extends Object> {
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
   ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
+  ///
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findStream] method instead.
   Stream<List<T>> findStreamWithConverter() {
@@ -1274,6 +1321,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the raw form of a List<Map<String, dynamic>> consider
   /// using the [findStreamByQuery] method instead.
@@ -1298,6 +1349,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the raw form of a Map<String, dynamic> consider
   /// using the [findDocStream] method instead.
@@ -1330,19 +1385,29 @@ class FirestoreAPI<T extends Object> {
   Query<Map<String, dynamic>> findCollection() {
     _log.info(
         '🔥 Finding ${_collectionPath()} CollectionReference without converter..');
-    return _tryAddLocalId
-        ? (_isCollectionGroup
-                ? _firebaseFirestore.collectionGroup(_collectionPath())
-                : _firebaseFirestore.collection(_collectionPath()))
-            .withConverter<Map<String, dynamic>>(
-            fromFirestore: (snapshot, _) =>
-                (snapshot.data() ?? {}).tryAddLocalId(
-              snapshot.id,
-              idFieldName: _idFieldName,
-            ),
-            toFirestore: (value, _) => value,
+    return (_isCollectionGroup
+            ? _firebaseFirestore.collectionGroup(_collectionPath())
+            : _firebaseFirestore.collection(_collectionPath()))
+        .withConverter<Map<String, dynamic>>(
+      fromFirestore: (snapshot, _) => (snapshot.data() ?? {})
+          .tryAddLocalId(
+            snapshot.id,
+            idFieldName: _idFieldName,
+            tryAddLocalId: _tryAddLocalId,
           )
-        : _firebaseFirestore.collection(_collectionPath());
+          .tryAddLocalReference(snapshot.reference,
+              referenceFieldName: _referenceFieldName,
+              tryAddLocalReference: _tryAddLocalReference),
+      toFirestore: (value, _) => value
+          .tryRemoveLocalId(
+            idFieldName: _idFieldName,
+            tryRemoveLocalId: _tryAddLocalId,
+          )
+          .tryRemoveLocalReference(
+            referenceFieldName: _referenceFieldName,
+            tryRemoveLocalReference: _tryAddLocalReference,
+          ),
+    );
   }
 
   /// Finds a [DocumentReference] of type Map<String, dynamic> based on given [id].
@@ -1350,6 +1415,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the form of [T] consider using the
   /// [findDocRefWithConverter] method instead.
@@ -1365,19 +1434,30 @@ class FirestoreAPI<T extends Object> {
     );
     _log.info(
         '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference without converter and id: $id..');
-    return _tryAddLocalId
-        ? _firebaseFirestore
-            .doc('${collectionPathOverride ?? _collectionPath()}/$id')
-            .withConverter<Map<String, dynamic>>(
-              fromFirestore: (snapshot, _) =>
-                  (snapshot.data() ?? {}).tryAddLocalId(
+    return _firebaseFirestore
+        .doc('${collectionPathOverride ?? _collectionPath()}/$id')
+        .withConverter<Map<String, dynamic>>(
+          fromFirestore: (snapshot, _) => (snapshot.data() ?? {})
+              .tryAddLocalId(
                 snapshot.id,
                 idFieldName: _idFieldName,
+                tryAddLocalId: _tryAddLocalId,
+              )
+              .tryAddLocalReference(
+                snapshot.reference,
+                referenceFieldName: _referenceFieldName,
+                tryAddLocalReference: _tryAddLocalReference,
               ),
-              toFirestore: (value, _) => value,
-            )
-        : _firebaseFirestore
-            .doc('${collectionPathOverride ?? _collectionPath()}/$id');
+          toFirestore: (value, _) => value
+              .tryRemoveLocalId(
+                idFieldName: _idFieldName,
+                tryRemoveLocalId: _tryAddLocalId,
+              )
+              .tryRemoveLocalReference(
+                referenceFieldName: _referenceFieldName,
+                tryRemoveLocalReference: _tryAddLocalReference,
+              ),
+        );
   }
 
   /// Finds a [DocumentSnapshot] of type Map<String, dynamic> based on given [id].
@@ -1388,6 +1468,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the form of [T] consider using the
   /// [findDocSnapshotWithConverter] method instead.
@@ -1414,6 +1498,10 @@ class FirestoreAPI<T extends Object> {
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
   ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
+  ///
   /// If you rather want to retrieve data in the form of list of [T] consider using the
   /// [findStreamWithConverter] method instead.
   Stream<QuerySnapshot<Map<String, dynamic>>> findStream() {
@@ -1427,6 +1515,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the form of list of [T] consider using the
   /// [findStreamByQueryWithConverter] method instead.
@@ -1447,6 +1539,10 @@ class FirestoreAPI<T extends Object> {
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
   /// have easy access to the document id at any time.
+  ///
+  /// If [_tryAddLocalReference] is true then your data will also contain a local reference field based
+  /// on the [_referenceFieldName] specified in the constructor. Add this reference field to your [T] and you will
+  /// have easy access to the document reference at any time.
   ///
   /// If you rather want to retrieve data in the form of [T] consider using the
   /// [findDocStreamWithConverter] method instead.
