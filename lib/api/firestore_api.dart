@@ -26,7 +26,7 @@ class FirestoreAPI<T extends Object> {
   /// data to specific models of [T] then define both the [toJson] and [fromJson].
   ///
   /// If [tryAddLocalId] is true then your data will have an id field added based on the
-  /// [idFieldName]. Add this id field to the model you're deserializing to and you
+  /// [idFieldName]. Add this id field to the model you're serializing to and you
   /// will have easy access to the document id at any time. Any create or update method will by
   /// default try te remove the field again before writing to Firestore (unless specified otherwise
   /// inside the method).
@@ -80,17 +80,21 @@ class FirestoreAPI<T extends Object> {
   /// Used to add an id field to any of your local Firestore data (so not actually in Firestore).
   ///
   /// If this is true then your data will have an id field added based on the [_idFieldName]
-  /// specified in the constructor. Add this id field to the model you're deserializing to and you
+  /// specified in the constructor. Add this id field to the model you're serializing to and you
   /// will have easy access to the document id at any time. Any create or update method will by
   /// default try te remove the field again before writing to Firestore (unless specified otherwise).
+  ///
+  /// Setting this to true will also try to remove the field when deserializing.
   final bool _tryAddLocalId;
 
   /// Used to add a [DocumentReference] field to any of your local Firestore data (so not actually in Firestore).
   ///
   /// If this is true then your data will have an id field added based on the [_idFieldName]
-  /// specified in the constructor. Add this id field to the model you're deserializing to and you
+  /// specified in the constructor. Add this id field to the model you're serializing to and you
   /// will have easy access to the document id at any time. Any create or update method will by
   /// default try te remove the field again before writing to Firestore (unless specified otherwise).
+  ///
+  /// Setting this to true will also try to remove the field when deserializing.
   final bool _tryAddLocalDocumentReference;
 
   /// Used to create responses from the configured [FeedbackConfig].
@@ -122,7 +126,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// This method returns raw data in the form of a Map<String, dynamic>. If [_tryAddLocalId] is
   /// true then the map will also contain a local id field based on the [_idFieldName]
-  /// specified in the constructor so you may retrieve document id's more easily after deserialization.
+  /// specified in the constructor so you may retrieve document id's more easily after serialization.
   ///
   /// If you rather want to convert this data into [T] immediately you should use the
   /// [findByIdWithConverter] method instead. Make sure to have specified the [_toJson]
@@ -226,7 +230,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// This method returns raw data in the form of a List<Map<String, dynamic>>. If [_tryAddLocalId] is
   /// true then the map will also contain a local id field based on the [_idFieldName]
-  /// specified in the constructor so you may retrieve document id's more easily after deserialization.
+  /// specified in the constructor so you may retrieve document id's more easily after serialization.
   ///
   /// If you rather want to convert this data into a list of [T] immediately you should use the
   /// [findBySearchTermWithConverter] method instead. Make sure to have specified the [_toJson]
@@ -475,7 +479,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// This method returns raw data in the form of a List<Map<String, dynamic>>. If [_tryAddLocalId] is
   /// true then the map will also contain a local id field based on the [_idFieldName]
-  /// specified in the constructor so you may retrieve document id's more easily after deserialization.
+  /// specified in the constructor so you may retrieve document id's more easily after serialization.
   ///
   /// If you rather want to convert this data into a list of [T] immediately you should use the
   /// [findByQueryWithConverter] method instead. Make sure to have specified the [_toJson]
@@ -568,7 +572,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// This method returns raw data in the form of a List<Map<String, dynamic>>. If [_tryAddLocalId] is
   /// true then the map will also contain a local id field based on the [_idFieldName]
-  /// specified in the constructor so you may retrieve document id's more easily after deserialization.
+  /// specified in the constructor so you may retrieve document id's more easily after serialization.
   ///
   /// If you rather want to convert this data into a list of [T] immediately you should use the
   /// [findAllWithConverter] method instead. Make sure to have specified the [_toJson]
@@ -1176,28 +1180,50 @@ class FirestoreAPI<T extends Object> {
             ? _firebaseFirestore.collectionGroup(_collectionPath())
             : _firebaseFirestore.collection(_collectionPath()))
         .withConverter<T>(
-      fromFirestore: (snapshot, _) => _fromJson!(
-        (snapshot.data() ?? {})
-            .tryAddLocalId(
-              snapshot.id,
-              idFieldName: _idFieldName,
-              tryAddLocalId: _tryAddLocalId,
-            )
-            .tryAddLocalDocumentReference(
-              snapshot.reference,
-              referenceFieldName: _documentReferenceFieldName,
-              tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
-            ),
-      ),
-      toFirestore: (value, _) => _toJson!(value)
-          .tryRemoveLocalId(
-            idFieldName: _idFieldName,
-            tryRemoveLocalId: _tryAddLocalId,
-          )
-          .tryRemoveLocalDocumentReference(
-            referenceFieldName: _documentReferenceFieldName,
-            tryRemoveLocalDocumentReference: _tryAddLocalDocumentReference,
-          ),
+      fromFirestore: (snapshot, _) {
+        final data = snapshot.data() ?? {};
+        try {
+          return _fromJson!(
+            data
+                .tryAddLocalId(
+                  snapshot.id,
+                  idFieldName: _idFieldName,
+                  tryAddLocalId: _tryAddLocalId,
+                )
+                .tryAddLocalDocumentReference(
+                  snapshot.reference,
+                  referenceFieldName: _documentReferenceFieldName,
+                  tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
+                ),
+          );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            'with id: ${snapshot.id} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
+      toFirestore: (data, _) {
+        try {
+          return _toJson!(data)
+              .tryRemoveLocalId(
+                idFieldName: _idFieldName,
+                tryRemoveLocalId: _tryAddLocalId,
+              )
+              .tryRemoveLocalDocumentReference(
+                referenceFieldName: _documentReferenceFieldName,
+                tryRemoveLocalDocumentReference: _tryAddLocalDocumentReference,
+              );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
     );
   }
 
@@ -1231,8 +1257,11 @@ class FirestoreAPI<T extends Object> {
     return _firebaseFirestore
         .doc('${collectionPathOverride ?? _collectionPath()}/$id')
         .withConverter<T>(
-          fromFirestore: (snapshot, _) => _fromJson!(
-            (snapshot.data() ?? {})
+      fromFirestore: (snapshot, _) {
+        final data = snapshot.data() ?? {};
+        try {
+          return _fromJson!(
+            data
                 .tryAddLocalId(
                   snapshot.id,
                   idFieldName: _idFieldName,
@@ -1243,8 +1272,19 @@ class FirestoreAPI<T extends Object> {
                   referenceFieldName: _documentReferenceFieldName,
                   tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
                 ),
-          ),
-          toFirestore: (value, _) => _toJson!(value)
+          );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            'with id: ${snapshot.id} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
+      toFirestore: (data, _) {
+        try {
+          return _toJson!(data)
               .tryRemoveLocalId(
                 idFieldName: _idFieldName,
                 tryRemoveLocalId: _tryAddLocalId,
@@ -1252,8 +1292,16 @@ class FirestoreAPI<T extends Object> {
               .tryRemoveLocalDocumentReference(
                 referenceFieldName: _documentReferenceFieldName,
                 tryRemoveLocalDocumentReference: _tryAddLocalDocumentReference,
-              ),
-        );
+              );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
+    );
   }
 
   /// Finds a [DocumentSnapshot] of type [T] based on given [id].
@@ -1389,24 +1437,48 @@ class FirestoreAPI<T extends Object> {
             ? _firebaseFirestore.collectionGroup(_collectionPath())
             : _firebaseFirestore.collection(_collectionPath()))
         .withConverter<Map<String, dynamic>>(
-      fromFirestore: (snapshot, _) => (snapshot.data() ?? {})
-          .tryAddLocalId(
-            snapshot.id,
-            idFieldName: _idFieldName,
-            tryAddLocalId: _tryAddLocalId,
-          )
-          .tryAddLocalDocumentReference(snapshot.reference,
-              referenceFieldName: _documentReferenceFieldName,
-              tryAddLocalDocumentReference: _tryAddLocalDocumentReference),
-      toFirestore: (value, _) => value
-          .tryRemoveLocalId(
-            idFieldName: _idFieldName,
-            tryRemoveLocalId: _tryAddLocalId,
-          )
-          .tryRemoveLocalDocumentReference(
-            referenceFieldName: _documentReferenceFieldName,
-            tryRemoveLocalDocumentReference: _tryAddLocalDocumentReference,
-          ),
+      fromFirestore: (snapshot, _) {
+        final data = snapshot.data() ?? {};
+        try {
+          return data
+              .tryAddLocalId(
+                snapshot.id,
+                idFieldName: _idFieldName,
+                tryAddLocalId: _tryAddLocalId,
+              )
+              .tryAddLocalDocumentReference(
+                snapshot.reference,
+                referenceFieldName: _documentReferenceFieldName,
+                tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
+              );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            'with id: ${snapshot.id} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
+      toFirestore: (data, _) {
+        try {
+          return data
+              .tryRemoveLocalId(
+                idFieldName: _idFieldName,
+                tryRemoveLocalId: _tryAddLocalId,
+              )
+              .tryRemoveLocalDocumentReference(
+                referenceFieldName: _documentReferenceFieldName,
+                tryRemoveLocalDocumentReference: _tryAddLocalDocumentReference,
+              );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
     );
   }
 
@@ -1437,7 +1509,10 @@ class FirestoreAPI<T extends Object> {
     return _firebaseFirestore
         .doc('${collectionPathOverride ?? _collectionPath()}/$id')
         .withConverter<Map<String, dynamic>>(
-          fromFirestore: (snapshot, _) => (snapshot.data() ?? {})
+      fromFirestore: (snapshot, _) {
+        final data = snapshot.data() ?? {};
+        try {
+          return data
               .tryAddLocalId(
                 snapshot.id,
                 idFieldName: _idFieldName,
@@ -1447,8 +1522,19 @@ class FirestoreAPI<T extends Object> {
                 snapshot.reference,
                 referenceFieldName: _documentReferenceFieldName,
                 tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
-              ),
-          toFirestore: (value, _) => value
+              );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            'with id: ${snapshot.id} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
+      toFirestore: (data, _) {
+        try {
+          return data
               .tryRemoveLocalId(
                 idFieldName: _idFieldName,
                 tryRemoveLocalId: _tryAddLocalId,
@@ -1456,8 +1542,16 @@ class FirestoreAPI<T extends Object> {
               .tryRemoveLocalDocumentReference(
                 referenceFieldName: _documentReferenceFieldName,
                 tryRemoveLocalDocumentReference: _tryAddLocalDocumentReference,
-              ),
-        );
+              );
+        } catch (error) {
+          _log.error(
+            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            'data: $data',
+          );
+          rethrow;
+        }
+      },
+    );
   }
 
   /// Finds a [DocumentSnapshot] of type Map<String, dynamic> based on given [id].

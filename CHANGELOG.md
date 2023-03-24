@@ -1,3 +1,7 @@
+## 0.0.6+1
+
+* **✨ New:** Enhance logging for better tracking of the cause when encountering serialization and deserialization failures.
+
 ## 0.0.6
 
 * **⚠️ Breaking:** Rename local document reference fields to DocumentReference instead of reference.

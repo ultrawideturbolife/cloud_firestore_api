@@ -13,5 +13,5 @@ This package aims to provide a clean and efficient approach to dealing with data
 - User **feedback messages**
 - Instant **data converters** to your preferred models (optional)
 - **Local ID** access (optional)
+- **Local DocumentReference** access (optional)
 
-The entire package has extensive documentation. Reading the `FirestoreAPI` class from top to bottom (or at least the constructor part) will give you a good idea of the benefits of this package. Also, a good example project is next on the list to create and while doing that I will also update this readme with a lot more examples of the package functionality. For now I hope the package documentation will suffice. If you have any questions feel free to contact me through [codaveto.com](https://www.codaveto.com).
