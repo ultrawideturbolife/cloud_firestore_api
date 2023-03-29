@@ -23,7 +23,7 @@ class CreateExampleRequest extends Writeable {
   Map<String, dynamic> toJson() => exampleDTO.toJson();
 }
 
-class ExampleAPI extends FirestoreAPI<ExampleDTO> {
+class ExampleAPI extends FirestoreApi<ExampleDTO> {
   ExampleAPI()
       : super(
           collectionPath: () => 'Examples',

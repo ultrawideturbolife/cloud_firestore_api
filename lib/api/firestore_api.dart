@@ -18,8 +18,8 @@ typedef CollectionReferenceQuery<T> = Query<T> Function(
     Query<T> collectionReference);
 
 /// Used to perform all Firestore related CRUD tasks and a little bit more.
-class FirestoreAPI<T extends Object> {
-  /// The [FirestoreAPI] requires only a [firebaseFirestore] instance and a [collectionPath] to
+class FirestoreApi<T extends Object> {
+  /// The [FirestoreApi] requires only a [firebaseFirestore] instance and a [collectionPath] to
   /// work initially.
   ///
   /// If you are interested in using the 'WithConverter' methods that automatically convert your
@@ -36,12 +36,13 @@ class FirestoreAPI<T extends Object> {
   /// successful and unsuccessful CRUD operations of a certain collection.
   ///
   /// The [firestoreLogger] is used to provide proper logging when performing any operation inside
-  /// the [FirestoreAPI]. Implement your own version in order to use to use your own logging system.
-  FirestoreAPI({
+  /// the [FirestoreApi]. Implement your own version in order to use to use your own logging system.
+  FirestoreApi({
     required FirebaseFirestore firebaseFirestore,
     required String Function() collectionPath,
     Map<String, dynamic> Function(T value)? toJson,
     T Function(Map<String, dynamic> json)? fromJson,
+    T Function(Map<String, dynamic> json)? fromJsonError,
     bool tryAddLocalId = false,
     FeedbackConfig feedbackConfig = const FeedbackConfig(),
     FirestoreLogger firestoreLogger = const FirestoreDefaultLogger(),
@@ -55,6 +56,7 @@ class FirestoreAPI<T extends Object> {
         _collectionPath = collectionPath,
         _toJson = toJson,
         _fromJson = fromJson,
+        _fromJsonError = fromJsonError,
         _tryAddLocalId = tryAddLocalId,
         _responseConfig = feedbackConfig.responseConfig,
         _log = firestoreLogger,
@@ -76,6 +78,14 @@ class FirestoreAPI<T extends Object> {
 
   /// Used to deserialize your data to JSON when using 'WithConverter' methods.
   final T Function(Map<String, dynamic> json)? _fromJson;
+
+  /// Used to deserialize your data to JSON when using 'WithConverter' methods and a data error occurs.
+  ///
+  /// Use this to create a default object to show to the user in case parsing your data goes wrong.
+  /// This is especially useful when you are working with iterables of the same type.
+  /// Because now when an error occurs it will use a default object and parsing of the other objects
+  /// that have no errors can continue. Whereas before it would just throw an error and stop parsing.
+  final T Function(Map<String, dynamic> json)? _fromJsonError;
 
   /// Used to add an id field to any of your local Firestore data (so not actually in Firestore).
   ///
@@ -100,7 +110,7 @@ class FirestoreAPI<T extends Object> {
   /// Used to create responses from the configured [FeedbackConfig].
   final ResponseGenerator _responseConfig;
 
-  /// Used to provide proper logging when performing any operation inside the [FirestoreAPI].
+  /// Used to provide proper logging when performing any operation inside the [FirestoreApi].
   final FirestoreLogger _log;
 
   /// Used to provide a default 'created' field based on the provided [TimestampType] of create methods.
@@ -130,7 +140,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// If you rather want to convert this data into [T] immediately you should use the
   /// [findByIdWithConverter] method instead. Make sure to have specified the [_toJson]
-  /// and [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
+  /// and [_fromJson] methods or else the [FirestoreApi] will not know how to convert the data to [T].
   Future<FeedbackResponse<Map<String, dynamic>>> findById({
     required String id,
     String? collectionPathOverride,
@@ -173,7 +183,7 @@ class FirestoreAPI<T extends Object> {
   /// Finds a document based on given [id].
   ///
   /// This method returns data in the form of type [T]. Make sure to have specified the [_toJson] and
-  /// [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
+  /// [_fromJson] methods or else the [FirestoreApi] will not know how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
   /// on the [_idFieldName] specified in the constructor. Add this id field to your [T] and you will
@@ -234,7 +244,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// If you rather want to convert this data into a list of [T] immediately you should use the
   /// [findBySearchTermWithConverter] method instead. Make sure to have specified the [_toJson]
-  /// and [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
+  /// and [_fromJson] methods or else the [FirestoreApi] will not know how to convert the data to [T].
   Future<FeedbackResponse<List<Map<String, dynamic>>>> findBySearchTerm({
     required String searchTerm,
     required String searchField,
@@ -354,7 +364,7 @@ class FirestoreAPI<T extends Object> {
   /// that may contain the [searchField].
   ///
   /// This method returns data in the form of a list of [T]. Make sure to have specified the
-  /// [_toJson] and [_fromJson] methods or else the [FirestoreAPI] will not now how to convert the
+  /// [_toJson] and [_fromJson] methods or else the [FirestoreApi] will not now how to convert the
   /// data.
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -483,7 +493,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// If you rather want to convert this data into a list of [T] immediately you should use the
   /// [findByQueryWithConverter] method instead. Make sure to have specified the [_toJson]
-  /// and [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
+  /// and [_fromJson] methods or else the [FirestoreApi] will not know how to convert the data to [T].
   Future<FeedbackResponse<List<Map<String, dynamic>>>> findByQuery({
     required CollectionReferenceQuery<Map<String, dynamic>>
         collectionReferenceQuery,
@@ -526,7 +536,7 @@ class FirestoreAPI<T extends Object> {
   /// that may contain the [searchField].
   ///
   /// This method returns data in the form of a list of [T]. Make sure to have specified the
-  /// [_toJson] and [_fromJson] methods or else the [FirestoreAPI] will not now how to convert the
+  /// [_toJson] and [_fromJson] methods or else the [FirestoreApi] will not now how to convert the
   /// data.
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -576,7 +586,7 @@ class FirestoreAPI<T extends Object> {
   ///
   /// If you rather want to convert this data into a list of [T] immediately you should use the
   /// [findAllWithConverter] method instead. Make sure to have specified the [_toJson]
-  /// and [_fromJson] methods or else the [FirestoreAPI] will not know how to convert the data to [T].
+  /// and [_fromJson] methods or else the [FirestoreApi] will not know how to convert the data to [T].
   Future<FeedbackResponse<List<Map<String, dynamic>>>> findAll() async {
     try {
       _log.info('🔥 Finding all ${_collectionPath()} '
@@ -602,7 +612,7 @@ class FirestoreAPI<T extends Object> {
   /// Finds all documents of the specified [_collectionPath].
   ///
   /// This method returns data in the form of a list of [T]. Make sure to have specified the
-  /// [_toJson] and [_fromJson] methods or else the [FirestoreAPI] will not now how to convert the
+  /// [_toJson] and [_fromJson] methods or else the [FirestoreApi] will not now how to convert the
   /// data.
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -1160,7 +1170,7 @@ class FirestoreAPI<T extends Object> {
 
   /// Finds a [CollectionReference] of type [T] based on specified [_collectionPath].
   ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreApi]
   /// will not now how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -1198,10 +1208,34 @@ class FirestoreAPI<T extends Object> {
           );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
             'with id: ${snapshot.id} and '
             'data: $data',
           );
+          _log.info('🔥 Returning error response..');
+          try {
+            return _fromJsonError!(
+              data
+                  .tryAddLocalId(
+                    snapshot.id,
+                    idFieldName: _idFieldName,
+                    tryAddLocalId: _tryAddLocalId,
+                  )
+                  .tryAddLocalDocumentReference(
+                    snapshot.reference,
+                    referenceFieldName: _documentReferenceFieldName,
+                    tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
+                  ),
+            );
+          } catch (error, stackTrace) {
+            _log.error(
+              '🔥 Unexpected ${error.runtimeType} caught while return JSON error ${_collectionPath()} object '
+              'with id: ${snapshot.id} and '
+              'data: $data',
+              error: error,
+              stackTrace: stackTrace,
+            );
+          }
           rethrow;
         }
       },
@@ -1218,7 +1252,7 @@ class FirestoreAPI<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
             'data: $data',
           );
           rethrow;
@@ -1229,7 +1263,7 @@ class FirestoreAPI<T extends Object> {
 
   /// Finds a [DocumentReference] of type [T] based on given [id].
   ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreApi]
   /// will not now how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -1275,11 +1309,34 @@ class FirestoreAPI<T extends Object> {
           );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
             'with id: ${snapshot.id} and '
             'data: $data',
           );
-          rethrow;
+          try {
+            return _fromJsonError!(
+              data
+                  .tryAddLocalId(
+                    snapshot.id,
+                    idFieldName: _idFieldName,
+                    tryAddLocalId: _tryAddLocalId,
+                  )
+                  .tryAddLocalDocumentReference(
+                    snapshot.reference,
+                    referenceFieldName: _documentReferenceFieldName,
+                    tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
+                  ),
+            );
+          } catch (error, stackTrace) {
+            _log.error(
+              'Unexpected ${error.runtimeType} caught while return JSON error ${_collectionPath()} object '
+              'with id: ${snapshot.id} and '
+              'data: $data',
+              error: error,
+              stackTrace: stackTrace,
+            );
+            rethrow;
+          }
         }
       },
       toFirestore: (data, _) {
@@ -1295,7 +1352,7 @@ class FirestoreAPI<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
             'data: $data',
           );
           rethrow;
@@ -1306,7 +1363,7 @@ class FirestoreAPI<T extends Object> {
 
   /// Finds a [DocumentSnapshot] of type [T] based on given [id].
   ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreApi]
   /// will not now how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -1340,7 +1397,7 @@ class FirestoreAPI<T extends Object> {
 
   /// Finds a [Stream] of list of [T] based on specified [_collectionPath] (all documents).
   ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreApi]
   /// will not now how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -1363,7 +1420,7 @@ class FirestoreAPI<T extends Object> {
 
   /// Finds a [Stream] of list of [T] based on given [collectionReferenceQuery] and [whereDescription].
   ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreApi]
   /// will not now how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -1391,7 +1448,7 @@ class FirestoreAPI<T extends Object> {
 
   /// Finds a [Stream] of type [T] based on given [id].
   ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreApi]
   /// will not now how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
@@ -1453,7 +1510,7 @@ class FirestoreAPI<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
             'with id: ${snapshot.id} and '
             'data: $data',
           );
@@ -1473,7 +1530,7 @@ class FirestoreAPI<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
             'data: $data',
           );
           rethrow;
@@ -1525,7 +1582,7 @@ class FirestoreAPI<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
+            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
             'with id: ${snapshot.id} and '
             'data: $data',
           );
@@ -1545,7 +1602,7 @@ class FirestoreAPI<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            'Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
+            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
             'data: $data',
           );
           rethrow;
@@ -1556,7 +1613,7 @@ class FirestoreAPI<T extends Object> {
 
   /// Finds a [DocumentSnapshot] of type Map<String, dynamic> based on given [id].
   ///
-  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreAPI]
+  /// Make sure to have specified the [_toJson] and [_fromJson] methods or else the [FirestoreApi]
   /// will not now how to convert the data to [T].
   ///
   /// If [_tryAddLocalId] is true then your data will also contain a local id field based
