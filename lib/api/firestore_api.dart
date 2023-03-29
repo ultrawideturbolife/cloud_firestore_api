@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore_api/data/exceptions/invalid_json_exception.dart';
 import 'package:feedback_response/feedback_response.dart';
 import 'package:cloud_firestore_api/util/firestore_default_logger.dart';
 import 'package:cloud_firestore_api/abstracts/firestore_logger.dart';
@@ -1206,11 +1207,18 @@ class FirestoreApi<T extends Object> {
                   tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
                 ),
           );
-        } catch (error) {
+        } catch (error, stackTrace) {
           _log.error(
             '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
             'with id: ${snapshot.id} and '
             'data: $data',
+            stackTrace: stackTrace,
+            error: InvalidJsonException(
+              id: snapshot.id,
+              path: snapshot.reference.path,
+              api: runtimeType.toString(),
+              data: data,
+            ),
           );
           _log.info('🔥 Returning error response..');
           try {
@@ -1307,11 +1315,18 @@ class FirestoreApi<T extends Object> {
                   tryAddLocalDocumentReference: _tryAddLocalDocumentReference,
                 ),
           );
-        } catch (error) {
+        } catch (error, stackTrace) {
           _log.error(
             '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
             'with id: ${snapshot.id} and '
             'data: $data',
+            error: InvalidJsonException(
+              id: snapshot.id,
+              path: snapshot.reference.path,
+              api: runtimeType.toString(),
+              data: data,
+            ),
+            stackTrace: stackTrace,
           );
           try {
             return _fromJsonError!(

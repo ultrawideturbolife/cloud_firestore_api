@@ -1,3 +1,7 @@
+## 0.0.6+3
+
+* **✨ New:** Added `InvalidJsonException` class for handling invalid JSON received from APIs. It includes fields for the associated `id`, `path`, `api`, and problematic `data`.
+
 ## 0.0.6+2
 
 * **✨ New:** Added `T Function(Map<String, dynamic> json)? fromJsonError` method to FirestoreApi: This new method allows users to specify a default object to return in case data parsing fails, improving error handling and increasing resilience in the data retrieval process.
