@@ -1,3 +1,7 @@
+## 0.0.7
+
+* **⚠️ Breaking:** Renamed FirestoreAPI to FirestoreApi.
+
 ## 0.0.6+3
 
 * **✨ New:** Added `InvalidJsonException` class for handling invalid JSON received from APIs. It includes fields for the associated `id`, `path`, `api`, and problematic `data`.
