@@ -44,6 +44,8 @@ class FirestoreApi<T extends Object> {
     Map<String, dynamic> Function(T value)? toJson,
     T Function(Map<String, dynamic> json)? fromJson,
     T Function(Map<String, dynamic> json)? fromJsonError,
+    T Function(String id)? cacheWithConverterCallback,
+    Map<String, dynamic> Function(String id)? cacheCallback,
     bool tryAddLocalId = false,
     FeedbackConfig feedbackConfig = const FeedbackConfig(),
     FirestoreLogger firestoreLogger = const FirestoreDefaultLogger(),
@@ -66,7 +68,9 @@ class FirestoreApi<T extends Object> {
         _idFieldName = idFieldName,
         _documentReferenceFieldName = documentReferenceFieldName,
         _isCollectionGroup = isCollectionGroup,
-        _tryAddLocalDocumentReference = tryAddLocalDocumentReference;
+        _tryAddLocalDocumentReference = tryAddLocalDocumentReference,
+        _cacheWithConverterCallback = cacheWithConverterCallback,
+        _cacheCallback = cacheCallback;
 
   /// Used to performs Firestore operations.
   final FirebaseFirestore _firebaseFirestore;
@@ -87,6 +91,12 @@ class FirestoreApi<T extends Object> {
   /// Because now when an error occurs it will use a default object and parsing of the other objects
   /// that have no errors can continue. Whereas before it would just throw an error and stop parsing.
   final T Function(Map<String, dynamic> json)? _fromJsonError;
+
+  /// Used to fetch a cached version of your data when using [T] 'WithConverter' methods.
+  final T Function(String id)? _cacheWithConverterCallback;
+
+  /// Used to fetch a cached version of your data when using methods without a converter.
+  final Map<String, dynamic> Function(String id)? _cacheCallback;
 
   /// Used to add an id field to any of your local Firestore data (so not actually in Firestore).
   ///

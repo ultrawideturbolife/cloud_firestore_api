@@ -1,3 +1,7 @@
+## 0.0.7+1
+
+* **✨ New:** Updated readme.
+
 ## 0.0.7
 
 * **⚠️ Breaking:** Renamed FirestoreAPI to FirestoreApi.
