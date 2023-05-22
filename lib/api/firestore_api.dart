@@ -1766,4 +1766,16 @@ class FirestoreApi<T extends Object> {
 
   /// Helper method to fetch a [WriteBatch] from [_firebaseFirestore]..
   WriteBatch get writeBatch => _firebaseFirestore.batch();
+
+  /// Helper method to run a [Transaction] from [_firebaseFirestore]..
+  Future<T> runTransaction<T>(
+    TransactionHandler<T> transactionHandler, {
+    Duration timeout = const Duration(seconds: 30),
+    int maxAttempts = 5,
+  }) =>
+      _firebaseFirestore.runTransaction(
+        transactionHandler,
+        timeout: timeout,
+        maxAttempts: maxAttempts,
+      );
 }

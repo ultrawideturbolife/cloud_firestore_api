@@ -1,6 +1,6 @@
 name: cloud_firestore_api
 description: A clean and efficient approach to dealing with data from Firestore.
-version: 0.0.8
+version: 0.0.8+1
 homepage: https://github.com/codaveto/cloud_firestore_api
 
 environment:
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_firestore: ^4.5.0
+  cloud_firestore: ^4.7.1
   feedback_response: ^0.0.6
 dev_dependencies:
   flutter_test:

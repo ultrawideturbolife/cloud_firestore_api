@@ -1,3 +1,7 @@
+## 0.0.8+1
+
+
+
 ## 0.0.8
 
 * **⚠️ Breaking:** Renamed `create`, `update` and `delete` methods to `createDoc`, `updateDoc` and `deleteDoc` in order to avoid inheritance problems with certain packages.
