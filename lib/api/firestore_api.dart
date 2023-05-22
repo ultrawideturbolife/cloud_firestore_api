@@ -44,8 +44,6 @@ class FirestoreApi<T extends Object> {
     Map<String, dynamic> Function(T value)? toJson,
     T Function(Map<String, dynamic> json)? fromJson,
     T Function(Map<String, dynamic> json)? fromJsonError,
-    T Function(String id)? cacheWithConverterCallback,
-    Map<String, dynamic> Function(String id)? cacheCallback,
     bool tryAddLocalId = false,
     FeedbackConfig feedbackConfig = const FeedbackConfig(),
     FirestoreLogger firestoreLogger = const FirestoreDefaultLogger(),
@@ -68,9 +66,7 @@ class FirestoreApi<T extends Object> {
         _idFieldName = idFieldName,
         _documentReferenceFieldName = documentReferenceFieldName,
         _isCollectionGroup = isCollectionGroup,
-        _tryAddLocalDocumentReference = tryAddLocalDocumentReference,
-        _cacheWithConverterCallback = cacheWithConverterCallback,
-        _cacheCallback = cacheCallback;
+        _tryAddLocalDocumentReference = tryAddLocalDocumentReference;
 
   /// Used to performs Firestore operations.
   final FirebaseFirestore _firebaseFirestore;
@@ -92,16 +88,11 @@ class FirestoreApi<T extends Object> {
   /// that have no errors can continue. Whereas before it would just throw an error and stop parsing.
   final T Function(Map<String, dynamic> json)? _fromJsonError;
 
-  /// Used to fetch a cached version of your data when using [T] 'WithConverter' methods.
-  final T Function(String id)? _cacheWithConverterCallback;
-
-  /// Used to fetch a cached version of your data when using methods without a converter.
-  final Map<String, dynamic> Function(String id)? _cacheCallback;
-
   /// Used to add an id field to any of your local Firestore data (so not actually in Firestore).
   ///
   /// If this is true then your data will have an id field added based on the [_idFieldName]
   /// specified in the constructor. Add this id field to the model you're serializing to and you
+
   /// will have easy access to the document id at any time. Any create or update method will by
   /// default try te remove the field again before writing to Firestore (unless specified otherwise).
   ///
@@ -670,7 +661,7 @@ class FirestoreApi<T extends Object> {
   /// Passing in an [id] will give your document that [id].
   ///
   /// Passing in a [writeBatch] will close the [WriteBatch] and perform the last commit. If you want
-  /// to add more to your [WriteBatch] then use the [batchCreate] method instead.
+  /// to add more to your [WriteBatch] then use the [batchCreateDoc] method instead.
   ///
   /// The [createTimeStampType] determines the type of automatically added [_createdFieldName] and/or
   /// [_updatedFieldName] field(s) of [Timestamp] when [merge] is false. Pass in a [TimestampType.none]
@@ -684,7 +675,7 @@ class FirestoreApi<T extends Object> {
   /// document does not exist it will default to a regular create.
   ///
   /// The [mergeFields] determine which fields to upsert, leave blank to upsert the entire object.
-  Future<FeedbackResponse<DocumentReference>> create({
+  Future<FeedbackResponse<DocumentReference>> createDoc({
     required Writeable writeable,
     String? id,
     WriteBatch? writeBatch,
@@ -693,6 +684,7 @@ class FirestoreApi<T extends Object> {
     bool merge = false,
     List<FieldPath>? mergeFields,
     String? collectionPathOverride,
+    Transaction? transaction,
   }) async {
     assert(
       _isCollectionGroup == (collectionPathOverride != null),
@@ -719,7 +711,7 @@ class FirestoreApi<T extends Object> {
         final DocumentReference documentReference;
         if (writeBatch != null) {
           _log.info('🔥 WriteBatch was not null! Creating with batch..');
-          final lastBatchResponse = await batchCreate(
+          final lastBatchResponse = await batchCreateDoc(
             writeable: writeable,
             id: id,
             writeBatch: writeBatch,
@@ -764,14 +756,24 @@ class FirestoreApi<T extends Object> {
                   updatedFieldName: _updatedFieldName,
                 );
           _log.value(writeableAsJson, '🔥 JSON');
-          _log.info('🔥 Setting data with documentReference.set..');
-          await documentReference.set(
-            writeableAsJson,
-            SetOptions(
-              merge: mergeFields == null ? merge : null,
-              mergeFields: mergeFields,
-            ),
+          var setOptions = SetOptions(
+            merge: mergeFields == null ? merge : null,
+            mergeFields: mergeFields,
           );
+          if (transaction == null) {
+            _log.info('🔥 Setting data with documentReference.set..');
+            await documentReference.set(
+              writeableAsJson,
+              setOptions,
+            );
+          } else {
+            _log.info('🔥 Setting data with transaction.set..');
+            transaction.set(
+              documentReference,
+              writeableAsJson,
+              setOptions,
+            );
+          }
         }
         _log.success('🔥 Setting data done!');
         return _responseConfig.createSuccessResponse(
@@ -824,7 +826,7 @@ class FirestoreApi<T extends Object> {
   /// field to your document. The field name will be what's specified in [_idFieldName].
   ///
   /// The [mergeFields] determine which fields to upsert, leave blank to upsert the entire object.
-  Future<FeedbackResponse<WriteBatchWithReference?>> batchCreate({
+  Future<FeedbackResponse<WriteBatchWithReference?>> batchCreateDoc({
     required Writeable writeable,
     String? id,
     WriteBatch? writeBatch,
@@ -917,17 +919,18 @@ class FirestoreApi<T extends Object> {
   /// Updates data based on given [writeable] and [id].
   ///
   /// Passing in a [writeBatch] will close the [WriteBatch] and perform the last commit. If you want
-  /// to add more to your [WriteBatch] then use the [batchUpdate] method instead.
+  /// to add more to your [WriteBatch] then use the [batchUpdateDoc] method instead.
   ///
   /// The [timestampType] determines the type of automatically added [_createdFieldName] and/or
   /// [_updatedFieldName] field(s) of [Timestamp]. Pass in a [TimestampType.none] to avoid any of
   /// this automatic behaviour.
-  Future<FeedbackResponse<DocumentReference>> update({
+  Future<FeedbackResponse<DocumentReference>> updateDoc({
     required Writeable writeable,
     required String id,
     WriteBatch? writeBatch,
     TimestampType timestampType = TimestampType.updated,
     String? collectionPathOverride,
+    Transaction? transaction,
   }) async {
     assert(
       _isCollectionGroup == (collectionPathOverride != null),
@@ -949,7 +952,7 @@ class FirestoreApi<T extends Object> {
         final DocumentReference documentReference;
         if (writeBatch != null) {
           _log.info('🔥 WriteBatch was not null! Updating with batch..');
-          final lastBatchResponse = await batchUpdate(
+          final lastBatchResponse = await batchUpdateDoc(
             writeable: writeable,
             id: id,
             writeBatch: writeBatch,
@@ -979,8 +982,13 @@ class FirestoreApi<T extends Object> {
             updatedFieldName: _updatedFieldName,
           );
           _log.value(writeableAsJson, 'JSON');
-          _log.info('🔥 Updating data with documentReference.update..');
-          await documentReference.update(writeableAsJson);
+          if (transaction == null) {
+            _log.info('🔥 Updating data with documentReference.update..');
+            await documentReference.update(writeableAsJson);
+          } else {
+            _log.info('🔥 Updating data with transaction.update..');
+            transaction.update(documentReference, writeableAsJson);
+          }
         }
         _log.success('🔥 Updating data done!');
         return _responseConfig.updateSuccessResponse(
@@ -1016,7 +1024,7 @@ class FirestoreApi<T extends Object> {
   /// The [timestampType] determines the type of automatically added [_createdFieldName] and/or
   /// [_updatedFieldName] field(s) of [Timestamp]. Pass in a [TimestampType.none] to avoid any of
   /// this automatic behaviour.
-  Future<FeedbackResponse<WriteBatchWithReference?>> batchUpdate({
+  Future<FeedbackResponse<WriteBatchWithReference?>> batchUpdateDoc({
     required Writeable writeable,
     required String id,
     WriteBatch? writeBatch,
@@ -1079,11 +1087,12 @@ class FirestoreApi<T extends Object> {
   /// Deletes data based on given [id].
   ///
   /// Passing in a [writeBatch] will close the [WriteBatch] and perform the last commit. If you want
-  /// to add more to your [WriteBatch] then use the [batchDelete] method instead.
-  Future<FeedbackResponse<void>> delete({
+  /// to add more to your [WriteBatch] then use the [batchDeleteDoc] method instead.
+  Future<FeedbackResponse<void>> deleteDoc({
     required String id,
     WriteBatch? writeBatch,
     String? collectionPathOverride,
+    Transaction? transaction,
   }) async {
     assert(
       _isCollectionGroup == (collectionPathOverride != null),
@@ -1099,7 +1108,7 @@ class FirestoreApi<T extends Object> {
       final DocumentReference documentReference;
       if (writeBatch != null) {
         _log.info('🔥 WriteBatch was not null! Deleting with batch..');
-        final lastBatchResponse = await batchDelete(
+        final lastBatchResponse = await batchDeleteDoc(
           id: id,
           writeBatch: writeBatch,
           collectionPathOverride: collectionPathOverride,
@@ -1120,8 +1129,12 @@ class FirestoreApi<T extends Object> {
         documentReference =
             findDocRef(id: id, collectionPathOverride: collectionPathOverride);
         _log.value(documentReference.id, '🔥 Document ID');
-        _log.info('🔥 Deleting data with documentReference.delete..');
-        await documentReference.delete();
+        if (transaction == null) {
+          _log.info('🔥 Deleting data with documentReference.delete..');
+          await documentReference.delete();
+        } else {
+          transaction.delete(documentReference);
+        }
       }
       _log.success('🔥 Deleting data done!');
       return _responseConfig.deleteSuccessResponse(
@@ -1139,7 +1152,7 @@ class FirestoreApi<T extends Object> {
   ///
   /// Passing in a [writeBatch] will use that batch to add to it. If no batch is provided this
   /// method will create and return one.
-  Future<FeedbackResponse<WriteBatchWithReference?>> batchDelete({
+  Future<FeedbackResponse<WriteBatchWithReference?>> batchDeleteDoc({
     required String id,
     WriteBatch? writeBatch,
     String? collectionPathOverride,

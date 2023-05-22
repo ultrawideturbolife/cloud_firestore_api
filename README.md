@@ -587,7 +587,7 @@ void main() async {
   TaskDto taskDto = TaskDto(/* Your TaskDto data */);
 
   // Create a new task document using the create method
-  FeedbackResponse<DocumentReference> response = await taskApi.create(writeable: taskDto);
+  FeedbackResponse<DocumentReference> response = await taskApi.createDoc(writeable: taskDto);
   if (response.isSuccess) {
     print('Task document created successfully with ID: ${response.result!.id}');
   } else {
@@ -597,7 +597,7 @@ void main() async {
   // Update an existing task document
   String taskId = 'your-task-id'; // Replace with your actual task ID
   UpdateTaskRequest updateRequest = UpdateTaskRequest(title: 'New Title', description: 'New Description');
-  FeedbackResponse<void> updateResponse = await taskApi.update(id: taskId, writeable: updateRequest);
+  FeedbackResponse<void> updateResponse = await taskApi.updateDoc(id: taskId, writeable: updateRequest);
   if (updateResponse.isSuccess) {
     print('Task document updated successfully');
   } else {
@@ -632,7 +632,7 @@ Here's a step-by-step explanation of the **`update`** method:
 2. If valid, determine the document reference based on the provided **`id`** and **`collectionPathOverride`**.
 3. If a **`WriteBatch`** is provided, call the **`batchUpdate`** method and commit the batch after the last operation is added.
 4. If no **`WriteBatch`** is provided, convert the **`Writeable`** object to JSON and set the appropriate timestamps based on **`updateTimeStampType`**.
-5. Update the document in Firestore using **`documentReference.update()`** with the specified **`UpdateOptions`**.
+5. Update the document in Firestore using **`documentReference.updateDoc()`** with the specified **`UpdateOptions`**.
 
 The **`batchUpdate`** method is similar to the **`update`** method but is specifically designed to work with a **`WriteBatch`** object. It adds the update operation to the provided or newly created **`WriteBatch`** without committing it. This allows you to perform multiple update operations in a single transaction.
 
@@ -689,7 +689,7 @@ void main() async {
 
   // Update a task document using the update method
   FeedbackResponse<void> updateResponse =
-      await taskApi.update(id: taskId, writeable: updateRequest);
+      await taskApi.updateDoc(id: taskId, writeable: updateRequest);
   if (updateResponse.isSuccess) {
     print('Task document updated successfully');
   } else {
@@ -727,7 +727,7 @@ Here's a step-by-step explanation of the **`delete`** method:
 1. Check if the **`collectionPathOverride`** is provided or not.
 2. If a **`WriteBatch`** is provided, call the **`batchDelete`** method and commit the batch after the last operation is added.
 3. If no **`WriteBatch`** is provided, determine the document reference based on the provided **`id`** and **`collectionPathOverride`**.
-4. Delete the document in Firestore using **`documentReference.delete()`**.
+4. Delete the document in Firestore using **`documentReference.deleteDoc()`**.
 
 The **`batchDelete`** method is similar to the **`delete`** method but is specifically designed to work with a **`WriteBatch`** object. It adds the delete operation to the provided or newly created **`WriteBatch`** without committing it. This allows you to perform multiple delete operations in a single transaction.
 
@@ -748,7 +748,7 @@ void main() async {
 
   // Delete a task document using the delete method
   String taskId = 'your-task-id'; // Replace with your actual task ID
-  FeedbackResponse<void> deleteResponse = await taskApi.delete(id: taskId);
+  FeedbackResponse<void> deleteResponse = await taskApi.deleteDoc(id: taskId);
   if (deleteResponse.isSuccess) {
     print('Task document deleted successfully');
   } else {

@@ -1,3 +1,8 @@
+## 0.0.8
+
+* **⚠️ Breaking:** Renamed `create`, `update` and `delete` methods to `createDoc`, `updateDoc` and `deleteDoc` in order to avoid inheritance problems with certain packages.
+* **✨ New:** Added support for using a `Transaction` in `createDoc`, `updateDoc` and `deleteDoc`.
+
 ## 0.0.7+1
 
 * **✨ New:** Updated readme.

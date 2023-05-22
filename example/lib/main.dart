@@ -33,7 +33,7 @@ class ExampleAPI extends FirestoreApi<ExampleDTO> {
 
   void createExample() {
     final random = Random();
-    create(
+    createDoc(
       writeable: CreateExampleRequest(
         exampleDTO: ExampleDTO(
           thisIsABoolean: random.nextBool(),
