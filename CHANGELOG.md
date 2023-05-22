@@ -1,6 +1,10 @@
+## 0.0.8+2
+
+* **🐛️ Bugfix:** Fix bug where using transaction would result in unexpected DocumentReference error.
+
 ## 0.0.8+1
 
-
+* **✨ New:** Added `runTransaction` helper method.
 
 ## 0.0.8
 

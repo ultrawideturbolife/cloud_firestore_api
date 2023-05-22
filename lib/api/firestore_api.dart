@@ -769,7 +769,7 @@ class FirestoreApi<T extends Object> {
           } else {
             _log.info('🔥 Setting data with transaction.set..');
             transaction.set(
-              documentReference,
+              findDocRef(id: documentReference.id),
               writeableAsJson,
               setOptions,
             );
@@ -987,7 +987,8 @@ class FirestoreApi<T extends Object> {
             await documentReference.update(writeableAsJson);
           } else {
             _log.info('🔥 Updating data with transaction.update..');
-            transaction.update(documentReference, writeableAsJson);
+            transaction.update(
+                findDocRef(id: documentReference.id), writeableAsJson);
           }
         }
         _log.success('🔥 Updating data done!');
@@ -1133,7 +1134,7 @@ class FirestoreApi<T extends Object> {
           _log.info('🔥 Deleting data with documentReference.delete..');
           await documentReference.delete();
         } else {
-          transaction.delete(documentReference);
+          transaction.delete(findDocRef(id: documentReference.id));
         }
       }
       _log.success('🔥 Deleting data done!');
@@ -1768,8 +1769,8 @@ class FirestoreApi<T extends Object> {
   WriteBatch get writeBatch => _firebaseFirestore.batch();
 
   /// Helper method to run a [Transaction] from [_firebaseFirestore]..
-  Future<T> runTransaction<T>(
-    TransactionHandler<T> transactionHandler, {
+  Future<E> runTransaction<E>(
+    TransactionHandler<E> transactionHandler, {
     Duration timeout = const Duration(seconds: 30),
     int maxAttempts = 5,
   }) =>
