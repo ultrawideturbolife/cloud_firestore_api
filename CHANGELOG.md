@@ -1,3 +1,11 @@
+## 0.0.9
+
+* **✨ New:** Add the option to add `GetOptions` to a `FirestoreApi`.
+
+## 0.0.8+3
+
+* **✨ New:** Add `collection` and `doc` helper methods to `FirestoreApi` for easier access to collections and documents.
+
 ## 0.0.8+2
 
 * **🐛️ Bugfix:** Fix bug where using transaction would result in unexpected DocumentReference error.

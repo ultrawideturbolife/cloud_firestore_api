@@ -53,6 +53,7 @@ class FirestoreApi<T extends Object> {
     String documentReferenceFieldName = 'documentReference',
     bool isCollectionGroup = false,
     bool tryAddLocalDocumentReference = false,
+    GetOptions? getOptions,
   })  : _firebaseFirestore = firebaseFirestore,
         _collectionPath = collectionPath,
         _toJson = toJson,
@@ -66,7 +67,8 @@ class FirestoreApi<T extends Object> {
         _idFieldName = idFieldName,
         _documentReferenceFieldName = documentReferenceFieldName,
         _isCollectionGroup = isCollectionGroup,
-        _tryAddLocalDocumentReference = tryAddLocalDocumentReference;
+        _tryAddLocalDocumentReference = tryAddLocalDocumentReference,
+        _getOptions = getOptions;
 
   /// Used to performs Firestore operations.
   final FirebaseFirestore _firebaseFirestore;
@@ -134,6 +136,9 @@ class FirestoreApi<T extends Object> {
   /// Whether the [_collectionPath] refers to a collection group.
   final bool _isCollectionGroup;
 
+  /// An options class that configures the behavior of get() calls on [DocumentReference] and [Query].
+  final GetOptions? _getOptions;
+
   /// Finds a document based on given [id].
   ///
   /// This method returns raw data in the form of a Map<String, dynamic>. If [_tryAddLocalId] is
@@ -160,7 +165,7 @@ class FirestoreApi<T extends Object> {
       final result = (await findDocRef(
         id: id,
         collectionPathOverride: collectionPathOverride,
-      ).get())
+      ).get(_getOptions))
           .data();
       if (result != null) {
         _log.success('🔥 Found item!');
@@ -214,7 +219,7 @@ class FirestoreApi<T extends Object> {
       final result = (await findDocRefWithConverter(
         id: id,
         collectionPathOverride: collectionPathOverride,
-      ).get())
+      ).get(_getOptions))
           .data();
       if (result != null) {
         _log.success('🔥 Found item!');
@@ -288,7 +293,7 @@ class FirestoreApi<T extends Object> {
                       .limit(limit);
       final result = (await collectionReferenceQuery(
         findCollection(),
-      ).get())
+      ).get(_getOptions))
           .docs
           .map(
             (e) => e.data(),
@@ -325,7 +330,7 @@ class FirestoreApi<T extends Object> {
                             .limit(limit);
             final numberResult = (await collectionReferenceQuery(
               findCollection(),
-            ).get())
+            ).get(_getOptions))
                 .docs
                 .map(
                   (e) => e.data(),
@@ -419,7 +424,7 @@ class FirestoreApi<T extends Object> {
                       .limit(limit);
       final result = (await collectionReferenceQuery(
         findCollectionWithConverter(),
-      ).get())
+      ).get(_getOptions))
           .docs
           .map((e) => e.data())
           .toList();
@@ -453,7 +458,7 @@ class FirestoreApi<T extends Object> {
                             .limit(limit);
             final numberResult = (await collectionReferenceQuery(
               findCollectionWithConverter(),
-            ).get())
+            ).get(_getOptions))
                 .docs
                 .map(
                   (e) => e.data(),
@@ -508,7 +513,7 @@ class FirestoreApi<T extends Object> {
           'custom query where $whereDescription..');
       final result = (await collectionReferenceQuery(
         findCollection(),
-      ).get())
+      ).get(_getOptions))
           .docs
           .map(
             (e) => e.data(),
@@ -561,7 +566,8 @@ class FirestoreApi<T extends Object> {
           'with converter, with '
           'custom query where $whereDescription..');
       final result =
-          (await collectionReferenceQuery(findCollectionWithConverter()).get())
+          (await collectionReferenceQuery(findCollectionWithConverter())
+                  .get(_getOptions))
               .docs
               .map((e) => e.data())
               .toList();
@@ -593,7 +599,7 @@ class FirestoreApi<T extends Object> {
     try {
       _log.info('🔥 Finding all ${_collectionPath()} '
           'without converter..');
-      final result = (await findCollection().get())
+      final result = (await findCollection().get(_getOptions))
           .docs
           .map(
             (e) => e.data(),
@@ -631,7 +637,7 @@ class FirestoreApi<T extends Object> {
     try {
       _log.info('🔥 Finding all ${_collectionPath()} '
           'with converter..');
-      final result = (await findCollectionWithConverter().get())
+      final result = (await findCollectionWithConverter().get(_getOptions))
           .docs
           .map((e) => e.data())
           .toList();
@@ -745,7 +751,7 @@ class FirestoreApi<T extends Object> {
           _log.value(documentReference.id, '🔥 Document ID');
           _log.info('🔥 Creating JSON..');
           final writeableAsJson = (merge || mergeFields != null) &&
-                  (await documentReference.get()).exists
+                  (await documentReference.get(_getOptions)).exists
               ? updateTimeStampType.add(
                   writeable.toJson(),
                   updatedFieldName: _updatedFieldName,
@@ -866,7 +872,7 @@ class FirestoreApi<T extends Object> {
         _log.value(documentReference.id, '🔥 Document ID');
         _log.info('🔥 Creating JSON..');
         final writeableAsJson = (merge || mergeFields != null) &&
-                (await documentReference.get()).exists
+                (await documentReference.get(_getOptions)).exists
             ? updateTimeStampType.add(
                 writeable.toJson(),
                 updatedFieldName: _updatedFieldName,
@@ -1431,7 +1437,7 @@ class FirestoreApi<T extends Object> {
     );
     _log.info(
         '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentSnapshot with converter and id: $id..');
-    return docRefWithConverter.get();
+    return docRefWithConverter.get(_getOptions);
   }
 
   /// Finds a [Stream] of list of [T] based on specified [_collectionPath] (all documents).
@@ -1679,7 +1685,7 @@ class FirestoreApi<T extends Object> {
         findDocRef(id: id, collectionPathOverride: collectionPathOverride);
     _log.info(
         '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentSnapshot without converter and id: $id..');
-    return docRef.get();
+    return docRef.get(_getOptions);
   }
 
   /// Finds a [Stream] of List<Map<String, dynamic>> based on specified [_collectionPath] (all documents).
@@ -1762,7 +1768,7 @@ class FirestoreApi<T extends Object> {
     final docRef =
         findDocRef(id: id, collectionPathOverride: collectionPathOverride);
     _log.info('🔥 Checking if document exists with id: $id');
-    return (await docRef.get()).exists;
+    return (await docRef.get(_getOptions)).exists;
   }
 
   /// Helper method to fetch a [WriteBatch] from [_firebaseFirestore]..
@@ -1779,4 +1785,11 @@ class FirestoreApi<T extends Object> {
         timeout: timeout,
         maxAttempts: maxAttempts,
       );
+
+  /// The current collection
+  CollectionReference get collection =>
+      _firebaseFirestore.collection(_collectionPath());
+
+  /// A new document
+  DocumentReference get doc => collection.doc();
 }
