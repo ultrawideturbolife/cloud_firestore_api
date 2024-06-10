@@ -1,3 +1,7 @@
+## 0.0.10
+
+* **⚠️ Breaking:** Updated cloud_firestore to 5.0.0 see breaking changes here https://pub.dev/packages/cloud_firestore/changelog.
+
 ## 0.0.9+1
 
 * **✨ New:** Removed the writable error logging to avoid sensitive data being logged.
