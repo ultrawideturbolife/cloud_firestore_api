@@ -755,6 +755,7 @@ class FirestoreApi<T extends Object> {
               ? updateTimeStampType.add(
                   writeable.toJson(),
                   updatedFieldName: _updatedFieldName,
+                  createdFieldName: _createdFieldName,
                 )
               : createTimeStampType.add(
                   writeable.toJson(),
@@ -796,7 +797,6 @@ class FirestoreApi<T extends Object> {
       _log.error(
         '🔥 '
         'Unable to create ${collectionPathOverride ?? _collectionPath()} document with '
-        'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
         'createTimeStampType: ${createTimeStampType.name}, '
@@ -876,6 +876,7 @@ class FirestoreApi<T extends Object> {
             ? updateTimeStampType.add(
                 writeable.toJson(),
                 updatedFieldName: _updatedFieldName,
+                createdFieldName: _createdFieldName,
               )
             : createTimeStampType.add(
                 writeable.toJson(),
@@ -908,7 +909,6 @@ class FirestoreApi<T extends Object> {
       _log.error(
         '🔥 '
         'Unable to create ${collectionPathOverride ?? _collectionPath()} document with '
-        'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
         'createTimeStampType: ${createTimeStampType.name}, '
@@ -1012,7 +1012,6 @@ class FirestoreApi<T extends Object> {
       _log.error(
         '🔥 '
         'Unable to update ${collectionPathOverride ?? _collectionPath()} document with '
-        'writeable: $writeable, '
         'id: $id, '
         'writeBatch: $writeBatch, '
         'timeStampType: ${timestampType.name}..',

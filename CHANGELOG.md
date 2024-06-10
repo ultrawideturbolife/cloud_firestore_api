@@ -1,3 +1,7 @@
+## 0.0.9+1
+
+* **✨ New:** Removed the writable error logging to avoid sensitive data being logged.
+
 ## 0.0.9
 
 * **✨ New:** Add the option to add `GetOptions` to a `FirestoreApi`.
