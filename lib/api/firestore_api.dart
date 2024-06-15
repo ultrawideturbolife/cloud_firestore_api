@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore_api/data/enums/sensitive_log_level.dart';
 import 'package:cloud_firestore_api/data/exceptions/invalid_json_exception.dart';
+import 'package:cloud_firestore_api/data/models/sensitive_data.dart';
 import 'package:feedback_response/feedback_response.dart';
 import 'package:cloud_firestore_api/util/firestore_default_logger.dart';
 import 'package:cloud_firestore_api/abstracts/firestore_logger.dart';
@@ -54,6 +56,8 @@ class FirestoreApi<T extends Object> {
     bool isCollectionGroup = false,
     bool tryAddLocalDocumentReference = false,
     GetOptions? getOptions,
+    bool logSensitiveData = true,
+    SensitiveLogLevel sensitiveLogLevel = SensitiveLogLevel.info,
   })  : _firebaseFirestore = firebaseFirestore,
         _collectionPath = collectionPath,
         _toJson = toJson,
@@ -68,7 +72,11 @@ class FirestoreApi<T extends Object> {
         _documentReferenceFieldName = documentReferenceFieldName,
         _isCollectionGroup = isCollectionGroup,
         _tryAddLocalDocumentReference = tryAddLocalDocumentReference,
-        _getOptions = getOptions;
+        _getOptions = getOptions,
+        _sensitiveLogLevel = sensitiveLogLevel;
+
+  /// Whether to include sensitive data in logging.
+  final SensitiveLogLevel _sensitiveLogLevel;
 
   /// Used to performs Firestore operations.
   final FirebaseFirestore _firebaseFirestore;
@@ -139,6 +147,15 @@ class FirestoreApi<T extends Object> {
   /// An options class that configures the behavior of get() calls on [DocumentReference] and [Query].
   final GetOptions? _getOptions;
 
+  /// Whether to exclude sensitive data in info logging.
+  bool get _shouldNotSensitiveInfo => _sensitiveLogLevel.shouldNotInfo;
+
+  /// Whether to exclude sensitive data in warning logging.
+  bool get _shouldNotSensitiveWarning => _sensitiveLogLevel.shouldNotWarning;
+
+  /// Whether to exclude sensitive data in error logging.
+  bool get _shouldNotSensitiveError => _sensitiveLogLevel.shouldNotError;
+
   /// Finds a document based on given [id].
   ///
   /// This method returns raw data in the form of a Map<String, dynamic>. If [_tryAddLocalId] is
@@ -159,27 +176,45 @@ class FirestoreApi<T extends Object> {
       'in order to make this method work.',
     );
     try {
-      _log.info('🔥 Finding ${collectionPathOverride ?? _collectionPath()} '
-          'without converter, '
-          'id: $id..');
+      _log.info(
+        message: 'Finding without converter..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+              ),
+      );
       final result = (await findDocRef(
         id: id,
         collectionPathOverride: collectionPathOverride,
       ).get(_getOptions))
           .data();
       if (result != null) {
-        _log.success('🔥 Found item!');
+        _log.success(
+          message: 'Found item!',
+          sensitiveData: null,
+        );
         return _responseConfig.searchSuccessResponse(
           isPlural: false,
           result: result,
         );
       } else {
-        _log.warning('🔥 Found nothing!');
+        _log.warning(
+          message: 'Found nothing!',
+          sensitiveData: null,
+        );
         return _responseConfig.searchFailedResponse(isPlural: false);
       }
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to find ${_collectionPath()} without converter and id: $id.',
+        message: 'Unable to find document',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -213,27 +248,45 @@ class FirestoreApi<T extends Object> {
       'in order to make this method work.',
     );
     try {
-      _log.info('🔥 Finding ${collectionPathOverride ?? _collectionPath()} '
-          'with converter, '
-          'id: $id..');
+      _log.info(
+        message: 'Finding with converter..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+              ),
+      );
       final result = (await findDocRefWithConverter(
         id: id,
         collectionPathOverride: collectionPathOverride,
       ).get(_getOptions))
           .data();
       if (result != null) {
-        _log.success('🔥 Found item!');
+        _log.success(
+          message: 'Found item!',
+          sensitiveData: null,
+        );
         return _responseConfig.searchSuccessResponse(
             isPlural: false, result: result);
       } else {
-        _log.warning('🔥 Found nothing!');
+        _log.warning(
+          message: 'Found nothing!',
+          sensitiveData: null,
+        );
         return _responseConfig.searchFailedResponse(isPlural: false);
       }
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to find ${_collectionPath()} document with converter and id: $id.',
+        message: 'Unable to find document',
         error: error,
         stackTrace: stackTrace,
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+              ),
       );
       return _responseConfig.searchFailedResponse(isPlural: false);
     }
@@ -260,12 +313,18 @@ class FirestoreApi<T extends Object> {
     int? limit,
   }) async {
     try {
-      _log.info('🔥 Searching ${_collectionPath()} '
-          'without converter, '
-          'searchTerm: $searchTerm, '
-          'searchField: $searchField, '
-          'searchTermType: ${searchTermType.name} and '
-          'limit: $limit..');
+      _log.info(
+        message: 'Searching without converter..',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+                searchTerm: searchTerm,
+                searchField: searchField,
+                searchTermType: searchTermType,
+                limit: limit,
+              ),
+      );
       collectionReferenceQuery(
               Query<Map<String, dynamic>> collectionReference) =>
           searchTermType.isArray
@@ -340,7 +399,16 @@ class FirestoreApi<T extends Object> {
           }
         } catch (error, stackTrace) {
           _log.error(
-            '${error.runtimeType} caught while trying to search for number equivalent of $searchTerm',
+            message:
+                '${error.runtimeType} caught while trying to search for number equivalent',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: _collectionPath(),
+                    searchTerm: searchTerm,
+                    searchTermType: searchTermType,
+                    searchField: searchField,
+                  ),
             error: error,
             stackTrace: stackTrace,
           );
@@ -353,10 +421,15 @@ class FirestoreApi<T extends Object> {
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 '
-        'Unable to find ${_collectionPath()} documents with '
-        'search term: $searchTerm and '
-        'field: $searchField}',
+        message: 'Unable to find documents',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+                searchTerm: searchTerm,
+                searchField: searchField,
+                searchTermType: searchTermType,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -392,12 +465,18 @@ class FirestoreApi<T extends Object> {
     int? limit,
   }) async {
     try {
-      _log.info('🔥 Searching ${_collectionPath()} '
-          'without converter, '
-          'searchTerm: $searchTerm, '
-          'searchField: $searchField, '
-          'searchTermType: ${searchTermType.name} and '
-          'limit: $limit..');
+      _log.info(
+        message: 'Searching with converter..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+                searchTerm: searchTerm,
+                searchField: searchField,
+                searchTermType: searchTermType,
+                limit: limit,
+              ),
+      );
       collectionReferenceQuery(Query<T> collectionReference) =>
           searchTermType.isArray
               ? limit == null
@@ -468,7 +547,15 @@ class FirestoreApi<T extends Object> {
           }
         } catch (error, stackTrace) {
           _log.error(
-            '${error.runtimeType} caught while trying to search for number equivalent of $searchTerm',
+            message: 'Unable to search for number equivalent',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: _collectionPath(),
+                    searchTerm: searchTerm,
+                    searchField: searchField,
+                    searchTermType: searchTermType,
+                  ),
             error: error,
             stackTrace: stackTrace,
           );
@@ -479,10 +566,15 @@ class FirestoreApi<T extends Object> {
           isPlural: result.isPlural, result: result);
     } catch (error, stackTrace) {
       _log.error(
-          '🔥 '
-          'Unable to find ${_collectionPath()} documents with '
-          'search term: $searchTerm and '
-          'field: $searchField}',
+          message: 'Unable to find documents',
+          sensitiveData: _shouldNotSensitiveError
+              ? null
+              : SensitiveData(
+                  path: _collectionPath(),
+                  searchTerm: searchTerm,
+                  searchField: searchField,
+                  searchTermType: searchTermType,
+                ),
           error: error,
           stackTrace: stackTrace);
       return _responseConfig.searchFailedResponse(isPlural: true);
@@ -507,10 +599,15 @@ class FirestoreApi<T extends Object> {
     required String whereDescription,
   }) async {
     try {
-      _log.info('🔥 '
-          'Finding ${_collectionPath()} '
-          'without converter, with '
-          'custom query where $whereDescription..');
+      _log.info(
+        message: 'Finding without converter, with custom query..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+                whereDescription: whereDescription,
+              ),
+      );
       final result = (await collectionReferenceQuery(
         findCollection(),
       ).get(_getOptions))
@@ -526,9 +623,13 @@ class FirestoreApi<T extends Object> {
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 '
-        'Unable to find ${_collectionPath()} documents without converter, with '
-        'custom query where $whereDescription.',
+        message: 'Unable to find documents with custom query',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+                whereDescription: whereDescription,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -561,10 +662,15 @@ class FirestoreApi<T extends Object> {
     required String whereDescription,
   }) async {
     try {
-      _log.info('🔥 '
-          'Finding ${_collectionPath()} '
-          'with converter, with '
-          'custom query where $whereDescription..');
+      _log.info(
+        message: 'Finding with converter, with custom query..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+                whereDescription: whereDescription,
+              ),
+      );
       final result =
           (await collectionReferenceQuery(findCollectionWithConverter())
                   .get(_getOptions))
@@ -576,9 +682,13 @@ class FirestoreApi<T extends Object> {
           isPlural: result.isPlural, result: result);
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 '
-        'Unable to find ${_collectionPath()} documents with converter, with '
-        'custom query where $whereDescription.',
+        message: 'Unable to find documents with custom query',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+                whereDescription: whereDescription,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -597,8 +707,14 @@ class FirestoreApi<T extends Object> {
   /// and [_fromJson] methods or else the [FirestoreApi] will not know how to convert the data to [T].
   Future<FeedbackResponse<List<Map<String, dynamic>>>> findAll() async {
     try {
-      _log.info('🔥 Finding all ${_collectionPath()} '
-          'without converter..');
+      _log.info(
+        message: 'Finding all documents without converter..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+              ),
+      );
       final result = (await findCollection().get(_getOptions))
           .docs
           .map(
@@ -610,7 +726,12 @@ class FirestoreApi<T extends Object> {
           isPlural: result.isPlural, result: result);
     } catch (error, stackTrace) {
       _log.error(
-          '🔥 Unable to find ${_collectionPath()} all documents per findAll query',
+          message: 'Unable to find all documents',
+          sensitiveData: _shouldNotSensitiveError
+              ? null
+              : SensitiveData(
+                  path: _collectionPath(),
+                ),
           error: error,
           stackTrace: stackTrace);
       return _responseConfig.searchFailedResponse(isPlural: true);
@@ -635,8 +756,14 @@ class FirestoreApi<T extends Object> {
   /// using the [findAll] method instead.
   Future<FeedbackResponse<List<T>>> findAllWithConverter() async {
     try {
-      _log.info('🔥 Finding all ${_collectionPath()} '
-          'with converter..');
+      _log.info(
+        message: 'Finding all documents with converter..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+              ),
+      );
       final result = (await findCollectionWithConverter().get(_getOptions))
           .docs
           .map((e) => e.data())
@@ -646,9 +773,15 @@ class FirestoreApi<T extends Object> {
           isPlural: result.isPlural, result: result);
     } catch (error, stackTrace) {
       _log.error(
-          '🔥 Unable to find ${_collectionPath()} all documents per findAll query',
-          error: error,
-          stackTrace: stackTrace);
+        message: 'Unable to find all documents',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+              ),
+        error: error,
+        stackTrace: stackTrace,
+      );
       return _responseConfig.searchFailedResponse(isPlural: true);
     }
   }
@@ -656,9 +789,23 @@ class FirestoreApi<T extends Object> {
   /// Helper method for logging the length of a List result.
   void _logResultLength(List<dynamic> result) {
     if (result.isNotEmpty) {
-      _log.success('🔥 Found ${result.length} item(s)!');
+      _log.success(
+        message: 'Found ${result.length} item(s)!',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+              ),
+      );
     } else {
-      _log.warning('🔥 Found 0 items!');
+      _log.warning(
+        message: 'Found 0 items!',
+        sensitiveData: _shouldNotSensitiveWarning
+            ? null
+            : SensitiveData(
+                path: _collectionPath(),
+              ),
+      );
     }
   }
 
@@ -699,24 +846,31 @@ class FirestoreApi<T extends Object> {
       'in order to make this method work.',
     );
     try {
-      _log.info('🔥 Checking if writeable is valid..');
+      _log.info(
+          message: 'Checking if writeable is valid..', sensitiveData: null);
       final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
-        _log.success('🔥 Writeable is valid!');
+        _log.success(message: 'Writeable is valid!', sensitiveData: null);
         _log.info(
-          '🔥 '
-          'Creating ${collectionPathOverride ?? _collectionPath()} document with '
-          'writeable: $writeable, '
-          'id: $id, '
-          'writeBatch: $writeBatch, '
-          'createTimeStampType: ${createTimeStampType.name}, '
-          'updateTimeStampType: ${updateTimeStampType.name}, '
-          'merge: $merge, '
-          'mergeFields: $mergeFields..',
+          message: 'Creating document..',
+          sensitiveData: _shouldNotSensitiveInfo
+              ? null
+              : SensitiveData(
+                  path: collectionPathOverride ?? _collectionPath(),
+                  id: id,
+                  isBatch: writeBatch != null,
+                  createTimeStampType: createTimeStampType,
+                  updateTimeStampType: updateTimeStampType,
+                  isMerge: merge,
+                  mergeFields: mergeFields,
+                  isTransaction: transaction != null,
+                ),
         );
         final DocumentReference documentReference;
         if (writeBatch != null) {
-          _log.info('🔥 WriteBatch was not null! Creating with batch..');
+          _log.info(
+              message: 'WriteBatch was not null! Creating with batch..',
+              sensitiveData: null);
           final lastBatchResponse = await batchCreateDoc(
             writeable: writeable,
             id: id,
@@ -727,19 +881,26 @@ class FirestoreApi<T extends Object> {
             merge: merge,
             mergeFields: mergeFields,
           );
-          _log.info('🔥 Checking if batchCreate was successful..');
+          _log.info(
+              message: 'Checking if batchCreate was successful..',
+              sensitiveData: null);
           if (lastBatchResponse.isSuccess) {
             final writeBatchWithReference = lastBatchResponse.result!;
-            _log.info('🔥 Last batch was added with success! Committing..');
+            _log.info(
+                message: 'Last batch was added with success! Committing..',
+                sensitiveData: null);
             await writeBatchWithReference.writeBatch.commit();
-            _log.success('🔥 Committing writeBatch done!');
+            _log.success(
+                message: 'Committing writeBatch done!', sensitiveData: null);
             documentReference = writeBatchWithReference.documentReference;
           } else {
-            _log.error('🔥 Last batch failed!');
+            _log.error(message: 'Last batch failed!', sensitiveData: null);
             return _responseConfig.createFailedResponse(isPlural: true);
           }
         } else {
-          _log.info('🔥 WriteBatch was null! Creating without batch..');
+          _log.info(
+              message: 'WriteBatch was null! Creating without batch..',
+              sensitiveData: null);
           documentReference = id != null
               ? findDocRef(
                   id: id,
@@ -748,8 +909,10 @@ class FirestoreApi<T extends Object> {
               : _firebaseFirestore
                   .collection(collectionPathOverride ?? _collectionPath())
                   .doc();
-          _log.value(documentReference.id, '🔥 Document ID');
-          _log.info('🔥 Creating JSON..');
+          _log.info(
+            message: 'Creating JSON..',
+            sensitiveData: null,
+          );
           final writeableAsJson = (merge || mergeFields != null) &&
                   (await documentReference.get(_getOptions)).exists
               ? updateTimeStampType.add(
@@ -762,19 +925,36 @@ class FirestoreApi<T extends Object> {
                   createdFieldName: _createdFieldName,
                   updatedFieldName: _updatedFieldName,
                 );
-          _log.value(writeableAsJson, '🔥 JSON');
           var setOptions = SetOptions(
             merge: mergeFields == null ? merge : null,
             mergeFields: mergeFields,
           );
           if (transaction == null) {
-            _log.info('🔥 Setting data with documentReference.set..');
+            _log.info(
+              message: 'Setting data with documentReference.set..',
+              sensitiveData: _shouldNotSensitiveInfo
+                  ? null
+                  : SensitiveData(
+                      path: collectionPathOverride ?? _collectionPath(),
+                      id: documentReference.id,
+                      data: writeableAsJson,
+                    ),
+            );
             await documentReference.set(
               writeableAsJson,
               setOptions,
             );
           } else {
-            _log.info('🔥 Setting data with transaction.set..');
+            _log.info(
+              message: 'Setting data with transaction.set..',
+              sensitiveData: _shouldNotSensitiveInfo
+                  ? null
+                  : SensitiveData(
+                      path: collectionPathOverride ?? _collectionPath(),
+                      id: documentReference.id,
+                      data: writeableAsJson,
+                    ),
+            );
             transaction.set(
               findDocRef(id: documentReference.id),
               writeableAsJson,
@@ -782,27 +962,38 @@ class FirestoreApi<T extends Object> {
             );
           }
         }
-        _log.success('🔥 Setting data done!');
+        _log.success(
+          message: 'Setting data done!',
+          sensitiveData: null,
+        );
         return _responseConfig.createSuccessResponse(
           isPlural: writeBatch != null,
           result: documentReference,
         );
       }
-      _log.warning('🔥 Writeable was invalid!');
+      _log.warning(
+        message: 'Writeable was invalid!',
+        sensitiveData: null,
+      );
       return FeedbackResponse.error(
         title: isValidResponse.title,
         message: isValidResponse.message,
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 '
-        'Unable to create ${collectionPathOverride ?? _collectionPath()} document with '
-        'id: $id, '
-        'writeBatch: $writeBatch, '
-        'createTimeStampType: ${createTimeStampType.name}, '
-        'updateTimeStampType: ${updateTimeStampType.name}, '
-        'merge: $merge, '
-        'mergeFields: $mergeFields..',
+        message: 'Unable to create document',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+                isBatch: writeBatch != null,
+                createTimeStampType: createTimeStampType,
+                updateTimeStampType: updateTimeStampType,
+                isMerge: merge,
+                mergeFields: mergeFields,
+                isTransaction: transaction != null,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -851,17 +1042,20 @@ class FirestoreApi<T extends Object> {
     try {
       final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
-        _log.success('🔥 Writeable is valid!');
+        _log.success(message: 'Writeable is valid!', sensitiveData: null);
         _log.info(
-          '🔥 '
-          'Batch creating ${collectionPathOverride ?? _collectionPath()} document with '
-          'writeable: $writeable, '
-          'id: $id, '
-          'writeBatch: $writeBatch, '
-          'createTimeStampType: ${createTimeStampType.name}, '
-          'updateTimeStampType: ${updateTimeStampType.name}, '
-          'merge: $merge, '
-          'mergeFields: $mergeFields..',
+          message: 'Creating document with batch..',
+          sensitiveData: _shouldNotSensitiveInfo
+              ? null
+              : SensitiveData(
+                  path: collectionPathOverride ?? _collectionPath(),
+                  id: id,
+                  isBatch: writeBatch != null,
+                  createTimeStampType: createTimeStampType,
+                  updateTimeStampType: updateTimeStampType,
+                  isMerge: merge,
+                  mergeFields: mergeFields,
+                ),
         );
         final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
         final documentReference = id != null
@@ -869,8 +1063,7 @@ class FirestoreApi<T extends Object> {
             : _firebaseFirestore
                 .collection(collectionPathOverride ?? _collectionPath())
                 .doc();
-        _log.value(documentReference.id, '🔥 Document ID');
-        _log.info('🔥 Creating JSON..');
+        _log.info(message: 'Creating JSON..', sensitiveData: null);
         final writeableAsJson = (merge || mergeFields != null) &&
                 (await documentReference.get(_getOptions)).exists
             ? updateTimeStampType.add(
@@ -883,8 +1076,16 @@ class FirestoreApi<T extends Object> {
                 createdFieldName: _createdFieldName,
                 updatedFieldName: _updatedFieldName,
               );
-        _log.value(writeableAsJson, '🔥 JSON');
-        _log.info('🔥 Setting data with writeBatch.set..');
+        _log.info(
+          message: 'Setting data with writeBatch.set..',
+          sensitiveData: _shouldNotSensitiveInfo
+              ? null
+              : SensitiveData(
+                  path: collectionPathOverride ?? _collectionPath(),
+                  id: documentReference.id,
+                  data: writeableAsJson,
+                ),
+        );
         nullSafeWriteBatch.set(
           documentReference,
           writeableAsJson,
@@ -894,7 +1095,10 @@ class FirestoreApi<T extends Object> {
           ),
         );
         _log.success(
-            '🔥 Adding create to batch done! Returning WriteBatchWithReference..');
+          message:
+              'Adding create to batch done! Returning WriteBatchWithReference..',
+          sensitiveData: null,
+        );
         return FeedbackResponse.successNone(
           result: WriteBatchWithReference(
             writeBatch: nullSafeWriteBatch,
@@ -902,19 +1106,26 @@ class FirestoreApi<T extends Object> {
           ),
         );
       }
-      _log.warning('🔥 Writeable was invalid!');
+      _log.warning(
+        message: 'Writeable was invalid!',
+        sensitiveData: null,
+      );
       return FeedbackResponse.error(
           title: isValidResponse.title, message: isValidResponse.message);
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 '
-        'Unable to create ${collectionPathOverride ?? _collectionPath()} document with '
-        'id: $id, '
-        'writeBatch: $writeBatch, '
-        'createTimeStampType: ${createTimeStampType.name}, '
-        'updateTimeStampType: ${updateTimeStampType.name}, '
-        'merge: $merge, '
-        'mergeFields: $mergeFields..',
+        message: 'Unable to create document with batch',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+                isBatch: writeBatch != null,
+                createTimeStampType: createTimeStampType,
+                updateTimeStampType: updateTimeStampType,
+                isMerge: merge,
+                mergeFields: mergeFields,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -945,19 +1156,31 @@ class FirestoreApi<T extends Object> {
       'in order to make this method work.',
     );
     try {
-      _log.info('🔥 Checking if writeable is valid..');
+      _log.info(
+        message: 'Checking if writeable is valid..',
+        sensitiveData: null,
+      );
       final isValidResponse = writeable.isValidResponse();
       if (isValidResponse.isSuccess) {
-        _log.success('🔥 Writeable is valid!');
-        _log.info('🔥 '
-            'Updating ${collectionPathOverride ?? _collectionPath()} document with '
-            'writeable: $writeable, '
-            'id: $id, '
-            'writeBatch: $writeBatch, '
-            'timestampType: ${timestampType.name}..');
+        _log.success(message: 'Writeable is valid!', sensitiveData: null);
+        _log.info(
+          message: 'Updating document..',
+          sensitiveData: _shouldNotSensitiveInfo
+              ? null
+              : SensitiveData(
+                  path: collectionPathOverride ?? _collectionPath(),
+                  id: id,
+                  isBatch: writeBatch != null,
+                  isTransaction: transaction != null,
+                  updateTimeStampType: timestampType,
+                ),
+        );
         final DocumentReference documentReference;
         if (writeBatch != null) {
-          _log.info('🔥 WriteBatch was not null! Updating with batch..');
+          _log.info(
+            message: 'WriteBatch was not null! Updating with batch..',
+            sensitiveData: null,
+          );
           final lastBatchResponse = await batchUpdateDoc(
             writeable: writeable,
             id: id,
@@ -965,56 +1188,100 @@ class FirestoreApi<T extends Object> {
             timestampType: timestampType,
             collectionPathOverride: collectionPathOverride,
           );
-          _log.info('🔥 Checking if batchUpdate was successful..');
+          _log.info(
+            message: 'Checking if batchUpdate was successful..',
+            sensitiveData: null,
+          );
           if (lastBatchResponse.isSuccess) {
             final writeBatchWithReference = lastBatchResponse.result!;
-            _log.info('🔥 Last batch was added with success! Committing..');
+            _log.info(
+              message: 'Last batch was added with success! Committing..',
+              sensitiveData: null,
+            );
             await writeBatchWithReference.writeBatch.commit();
-            _log.success('🔥 Committing writeBatch done!');
+            _log.success(
+              message: 'Committing writeBatch done!',
+              sensitiveData: null,
+            );
             documentReference = writeBatchWithReference.documentReference;
           } else {
-            _log.error('🔥 Last batch failed!');
+            _log.error(
+              message: 'Last batch failed!',
+              sensitiveData: null,
+            );
             return _responseConfig.updateFailedResponse(isPlural: true);
           }
         } else {
-          _log.info('🔥 WriteBatch was null! Updating without batch..');
+          _log.info(
+            message: 'WriteBatch was null! Updating without batch..',
+            sensitiveData: null,
+          );
           documentReference = findDocRef(
               id: id, collectionPathOverride: collectionPathOverride);
-          _log.value(documentReference.id, '🔥 Document ID');
-          _log.info('🔥 Creating JSON..');
+          _log.info(
+            message: 'Creating JSON..',
+            sensitiveData: null,
+          );
           final writeableAsJson = timestampType.add(
             writeable.toJson(),
             createdFieldName: _createdFieldName,
             updatedFieldName: _updatedFieldName,
           );
-          _log.value(writeableAsJson, 'JSON');
           if (transaction == null) {
-            _log.info('🔥 Updating data with documentReference.update..');
+            _log.info(
+              message: 'Updating data with documentReference.update..',
+              sensitiveData: _shouldNotSensitiveInfo
+                  ? null
+                  : SensitiveData(
+                      path: collectionPathOverride ?? _collectionPath(),
+                      id: documentReference.id,
+                      data: writeableAsJson,
+                    ),
+            );
             await documentReference.update(writeableAsJson);
           } else {
-            _log.info('🔥 Updating data with transaction.update..');
+            _log.info(
+              message: 'Updating data with transaction.update..',
+              sensitiveData: _shouldNotSensitiveInfo
+                  ? null
+                  : SensitiveData(
+                      path: collectionPathOverride ?? _collectionPath(),
+                      id: documentReference.id,
+                      data: writeableAsJson,
+                    ),
+            );
             transaction.update(
                 findDocRef(id: documentReference.id), writeableAsJson);
           }
         }
-        _log.success('🔥 Updating data done!');
+        _log.success(
+          message: 'Updating data done!',
+          sensitiveData: null,
+        );
         return _responseConfig.updateSuccessResponse(
           isPlural: writeBatch != null,
           result: documentReference,
         );
       }
-      _log.warning('🔥 Writeable was invalid!');
+      _log.warning(
+        message: 'Writeable was invalid!',
+        sensitiveData: null,
+      );
       return FeedbackResponse.error(
         title: isValidResponse.title,
         message: isValidResponse.message,
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 '
-        'Unable to update ${collectionPathOverride ?? _collectionPath()} document with '
-        'id: $id, '
-        'writeBatch: $writeBatch, '
-        'timeStampType: ${timestampType.name}..',
+        message: 'Unable to update document',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+                isBatch: writeBatch != null,
+                updateTimeStampType: timestampType,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -1046,30 +1313,51 @@ class FirestoreApi<T extends Object> {
     final isValidResponse = writeable.isValidResponse();
     try {
       if (isValidResponse.isSuccess) {
-        _log.success('🔥 Writeable is valid!');
+        _log.success(
+          message: 'Writeable is valid!',
+          sensitiveData: null,
+        );
         _log.info(
-            '🔥 Batch updating ${collectionPathOverride ?? _collectionPath()} document with '
-            'writeable: $writeable, '
-            'id: $id, '
-            'writeBatch: $writeBatch, '
-            'timestampType: ${timestampType.name}..');
+          message: 'Updating document with batch..',
+          sensitiveData: _shouldNotSensitiveInfo
+              ? null
+              : SensitiveData(
+                  path: collectionPathOverride ?? _collectionPath(),
+                  id: id,
+                  isBatch: writeBatch != null,
+                  updateTimeStampType: timestampType,
+                ),
+        );
         final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
         final documentReference = findDocRef(id: id);
-        _log.value(documentReference.id, '🔥 Document ID');
-        _log.info('🔥 Creating JSON..');
+        _log.info(
+          message: 'Creating JSON..',
+          sensitiveData: null,
+        );
         final writeableAsJson = timestampType.add(
           writeable.toJson(),
           createdFieldName: _createdFieldName,
           updatedFieldName: _updatedFieldName,
         );
-        _log.value(writeableAsJson, '🔥 JSON');
-        _log.info('🔥 Updating data with writeBatch.update..');
+        _log.info(
+          message: 'Updating data with writeBatch.update..',
+          sensitiveData: _shouldNotSensitiveInfo
+              ? null
+              : SensitiveData(
+                  path: collectionPathOverride ?? _collectionPath(),
+                  id: documentReference.id,
+                  data: writeableAsJson,
+                ),
+        );
         nullSafeWriteBatch.update(
           documentReference,
           writeableAsJson,
         );
         _log.success(
-            '🔥 Adding update to batch done! Returning WriteBatchWithReference..');
+          message:
+              'Adding update to batch done! Returning WriteBatchWithReference..',
+          sensitiveData: null,
+        );
         return FeedbackResponse.successNone(
           result: WriteBatchWithReference(
             writeBatch: nullSafeWriteBatch,
@@ -1077,12 +1365,21 @@ class FirestoreApi<T extends Object> {
           ),
         );
       }
-      _log.warning('🔥 Writeable was invalid!');
+      _log.warning(
+        message: 'Writeable was invalid!',
+        sensitiveData: null,
+      );
       return FeedbackResponse.error(
           title: isValidResponse.title, message: isValidResponse.message);
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to batch update ${_collectionPath()} document with id: $id',
+        message: 'Unable to update document with batch',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -1108,46 +1405,81 @@ class FirestoreApi<T extends Object> {
     );
     try {
       _log.info(
-          '🔥 Deleting ${collectionPathOverride ?? _collectionPath()} document with '
-          'id: $id, '
-          'writeBatch: $writeBatch..');
+        message: 'Deleting document..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+                isBatch: writeBatch != null,
+              ),
+      );
       final DocumentReference documentReference;
       if (writeBatch != null) {
-        _log.info('🔥 WriteBatch was not null! Deleting with batch..');
+        _log.info(
+          message: 'WriteBatch was not null! Deleting with batch..',
+          sensitiveData: null,
+        );
         final lastBatchResponse = await batchDeleteDoc(
           id: id,
           writeBatch: writeBatch,
           collectionPathOverride: collectionPathOverride,
         );
-        _log.info('🔥 Checking if batchDelete was successful..');
+        _log.info(
+          message: 'Checking if batchDelete was successful..',
+          sensitiveData: null,
+        );
         if (lastBatchResponse.isSuccess) {
           final lastBatch = lastBatchResponse.result!;
-          _log.info('🔥 Last batch was added with success! Committing..');
+          _log.info(
+            message: 'Last batch was added with success! Committing..',
+            sensitiveData: null,
+          );
           await lastBatch.writeBatch.commit();
-          _log.success('🔥 Committing writeBatch done!');
+          _log.success(
+            message: 'Committing writeBatch done!',
+            sensitiveData: null,
+          );
           documentReference = lastBatch.documentReference;
         } else {
-          _log.error('🔥 Last batch failed!');
+          _log.error(
+            message: 'Last batch failed!',
+            sensitiveData: null,
+          );
           return _responseConfig.deleteFailedResponse(isPlural: true);
         }
       } else {
-        _log.info('🔥 WriteBatch was null! Deleting without batch..');
+        _log.info(
+          message: 'WriteBatch was null! Deleting without batch..',
+          sensitiveData: null,
+        );
         documentReference =
             findDocRef(id: id, collectionPathOverride: collectionPathOverride);
-        _log.value(documentReference.id, '🔥 Document ID');
         if (transaction == null) {
-          _log.info('🔥 Deleting data with documentReference.delete..');
+          _log.info(
+            message: 'Deleting data with documentReference.delete..',
+            sensitiveData: null,
+          );
           await documentReference.delete();
         } else {
           transaction.delete(findDocRef(id: documentReference.id));
         }
       }
-      _log.success('🔥 Deleting data done!');
+      _log.success(
+        message: 'Deleting data done!',
+        sensitiveData: null,
+      );
       return _responseConfig.deleteSuccessResponse(
           isPlural: writeBatch != null);
     } catch (error, stackTrace) {
       _log.error(
-          '🔥 Unable to update ${collectionPathOverride ?? _collectionPath()} document',
+          message: 'Unable to delete document',
+          sensitiveData: _shouldNotSensitiveError
+              ? null
+              : SensitiveData(
+                  path: collectionPathOverride ?? _collectionPath(),
+                  id: id,
+                ),
           error: error,
           stackTrace: stackTrace);
       return _responseConfig.deleteFailedResponse(isPlural: writeBatch != null);
@@ -1171,17 +1503,28 @@ class FirestoreApi<T extends Object> {
     );
     try {
       _log.info(
-          '🔥 Batch deleting ${collectionPathOverride ?? _collectionPath()} document with '
-          'id: $id, '
-          'writeBatch: $writeBatch..');
+        message: 'Deleting document with batch..',
+        sensitiveData: _shouldNotSensitiveInfo
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+                isBatch: writeBatch != null,
+              ),
+      );
       final nullSafeWriteBatch = writeBatch ?? this.writeBatch;
       final documentReference =
           findDocRef(id: id, collectionPathOverride: collectionPathOverride);
-      _log.value(documentReference.id, '🔥 Document ID');
-      _log.info('🔥 Deleting data with writeBatch.delete..');
+      _log.info(
+        message: 'Deleting data with writeBatch.delete..',
+        sensitiveData: null,
+      );
       nullSafeWriteBatch.delete(documentReference);
       _log.success(
-          '🔥 Adding delete to batch done! Returning WriteBatchWithReference..');
+        message:
+            'Adding delete to batch done! Returning WriteBatchWithReference..',
+        sensitiveData: null,
+      );
       return FeedbackResponse.successNone(
         result: WriteBatchWithReference(
           writeBatch: nullSafeWriteBatch,
@@ -1190,7 +1533,13 @@ class FirestoreApi<T extends Object> {
       );
     } catch (error, stackTrace) {
       _log.error(
-        '🔥 Unable to batch delete ${collectionPathOverride ?? _collectionPath()} document with id: $id',
+        message: 'Unable to delete document with batch',
+        sensitiveData: _shouldNotSensitiveError
+            ? null
+            : SensitiveData(
+                path: collectionPathOverride ?? _collectionPath(),
+                id: id,
+              ),
         error: error,
         stackTrace: stackTrace,
       );
@@ -1215,7 +1564,13 @@ class FirestoreApi<T extends Object> {
   /// using the [findCollection] method instead.
   Query<T> findCollectionWithConverter() {
     _log.info(
-        '🔥 Finding ${_collectionPath()} CollectionReference with converter..');
+      message: 'Finding collection with converter..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: _collectionPath(),
+            ),
+    );
     return (_isCollectionGroup
             ? _firebaseFirestore.collectionGroup(_collectionPath())
             : _firebaseFirestore.collection(_collectionPath()))
@@ -1238,9 +1593,15 @@ class FirestoreApi<T extends Object> {
           );
         } catch (error, stackTrace) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
-            'with id: ${snapshot.id} and '
-            'data: $data',
+            message:
+                'Unexpected error caught while adding local id and document reference',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: _collectionPath(),
+                    id: snapshot.id,
+                    data: data,
+                  ),
             stackTrace: stackTrace,
             error: InvalidJsonException(
               id: snapshot.id,
@@ -1249,7 +1610,7 @@ class FirestoreApi<T extends Object> {
               data: data,
             ),
           );
-          _log.info('🔥 Returning error response..');
+          _log.info(message: 'Returning error response..', sensitiveData: null);
           try {
             return _fromJsonError!(
               data
@@ -1266,9 +1627,15 @@ class FirestoreApi<T extends Object> {
             );
           } catch (error, stackTrace) {
             _log.error(
-              '🔥 Unexpected ${error.runtimeType} caught while return JSON error ${_collectionPath()} object '
-              'with id: ${snapshot.id} and '
-              'data: $data',
+              message:
+                  'Unexpected error caught while adding local id and document reference',
+              sensitiveData: _shouldNotSensitiveError
+                  ? null
+                  : SensitiveData(
+                      path: _collectionPath(),
+                      id: snapshot.id,
+                      data: data,
+                    ),
               error: error,
               stackTrace: stackTrace,
             );
@@ -1289,8 +1656,14 @@ class FirestoreApi<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
-            'data: $data',
+            message:
+                'Unexpected error caught while removing local id and document reference',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: _collectionPath(),
+                    data: data,
+                  ),
           );
           rethrow;
         }
@@ -1324,7 +1697,14 @@ class FirestoreApi<T extends Object> {
       'in order to make this method work.',
     );
     _log.info(
-        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference with converter and id: $id..');
+      message: 'Finding document with converter..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: collectionPathOverride ?? _collectionPath(),
+              id: id,
+            ),
+    );
     return _firebaseFirestore
         .doc('${collectionPathOverride ?? _collectionPath()}/$id')
         .withConverter<T>(
@@ -1346,9 +1726,15 @@ class FirestoreApi<T extends Object> {
           );
         } catch (error, stackTrace) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
-            'with id: ${snapshot.id} and '
-            'data: $data',
+            message:
+                'Unexpected error caught while adding local id and document reference',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: collectionPathOverride ?? _collectionPath(),
+                    id: snapshot.id,
+                    data: data,
+                  ),
             error: InvalidJsonException(
               id: snapshot.id,
               path: snapshot.reference.path,
@@ -1373,9 +1759,15 @@ class FirestoreApi<T extends Object> {
             );
           } catch (error, stackTrace) {
             _log.error(
-              'Unexpected ${error.runtimeType} caught while return JSON error ${_collectionPath()} object '
-              'with id: ${snapshot.id} and '
-              'data: $data',
+              message:
+                  'Unexpected error caught while adding local id and document reference',
+              sensitiveData: _shouldNotSensitiveError
+                  ? null
+                  : SensitiveData(
+                      path: collectionPathOverride ?? _collectionPath(),
+                      id: snapshot.id,
+                      data: data,
+                    ),
               error: error,
               stackTrace: stackTrace,
             );
@@ -1396,8 +1788,15 @@ class FirestoreApi<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
-            'data: $data',
+            message:
+                'Unexpected error caught while removing local id and document reference',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: collectionPathOverride ?? _collectionPath(),
+                    id: id,
+                    data: data,
+                  ),
           );
           rethrow;
         }
@@ -1435,7 +1834,14 @@ class FirestoreApi<T extends Object> {
       collectionPathOverride: collectionPathOverride,
     );
     _log.info(
-        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentSnapshot with converter and id: $id..');
+      message: 'Finding doc snapshot with converter..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: collectionPathOverride ?? _collectionPath(),
+              id: id,
+            ),
+    );
     return docRefWithConverter.get(_getOptions);
   }
 
@@ -1456,7 +1862,13 @@ class FirestoreApi<T extends Object> {
   /// using the [findStream] method instead.
   Stream<List<T>> findStreamWithConverter() {
     _log.info(
-        '🔥 Finding ${_collectionPath()} Collection Stream with converter..');
+      message: 'Finding stream with converter..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: _collectionPath(),
+            ),
+    );
     return findCollectionWithConverter().snapshots().map(
           (event) => event.docs.map((e) => e.data()).toList(),
         );
@@ -1482,7 +1894,14 @@ class FirestoreApi<T extends Object> {
     required String whereDescription,
   }) {
     _log.info(
-        '🔥 Finding ${_collectionPath()} Stream with converter where $whereDescription..');
+      message: 'Finding stream by query with converter..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: _collectionPath(),
+              whereDescription: whereDescription,
+            ),
+    );
     return collectionReferenceQuery!(findCollectionWithConverter())
         .snapshots()
         .map(
@@ -1520,7 +1939,14 @@ class FirestoreApi<T extends Object> {
       collectionPathOverride: collectionPathOverride,
     );
     _log.info(
-        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference Stream with converter and id: $id..');
+      message: 'Finding doc stream with converter..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: collectionPathOverride ?? _collectionPath(),
+              id: id,
+            ),
+    );
     return docRefWithConverter.snapshots().map((e) => e.data());
   }
 
@@ -1533,7 +1959,13 @@ class FirestoreApi<T extends Object> {
   /// using the [findCollectionWithConverter] method instead.
   Query<Map<String, dynamic>> findCollection() {
     _log.info(
-        '🔥 Finding ${_collectionPath()} CollectionReference without converter..');
+      message: 'Finding collection..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: _collectionPath(),
+            ),
+    );
     return (_isCollectionGroup
             ? _firebaseFirestore.collectionGroup(_collectionPath())
             : _firebaseFirestore.collection(_collectionPath()))
@@ -1554,9 +1986,15 @@ class FirestoreApi<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
-            'with id: ${snapshot.id} and '
-            'data: $data',
+            message:
+                'Unexpected error caught while adding local id and document reference',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: _collectionPath(),
+                    id: snapshot.id,
+                    data: data,
+                  ),
           );
           rethrow;
         }
@@ -1574,8 +2012,12 @@ class FirestoreApi<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
-            'data: $data',
+            message: 'Could not find collection',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: _collectionPath(),
+                  ),
           );
           rethrow;
         }
@@ -1606,7 +2048,14 @@ class FirestoreApi<T extends Object> {
       'in order to make this method work.',
     );
     _log.info(
-        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference without converter and id: $id..');
+      message: 'Finding document..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: collectionPathOverride ?? _collectionPath(),
+              id: id,
+            ),
+    );
     return _firebaseFirestore
         .doc('${collectionPathOverride ?? _collectionPath()}/$id')
         .withConverter<Map<String, dynamic>>(
@@ -1626,9 +2075,15 @@ class FirestoreApi<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while serializing ${_collectionPath()} '
-            'with id: ${snapshot.id} and '
-            'data: $data',
+            message:
+                'Unexpected error caught while adding local id and document reference',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: collectionPathOverride ?? _collectionPath(),
+                    id: snapshot.id,
+                    data: data,
+                  ),
           );
           rethrow;
         }
@@ -1646,8 +2101,15 @@ class FirestoreApi<T extends Object> {
               );
         } catch (error) {
           _log.error(
-            '🔥 Unexpected ${error.runtimeType} caught while deserializing ${_collectionPath()} and '
-            'data: $data',
+            message:
+                'Unexpected error caught while removing local id and document reference',
+            sensitiveData: _shouldNotSensitiveError
+                ? null
+                : SensitiveData(
+                    path: collectionPathOverride ?? _collectionPath(),
+                    id: id,
+                    data: data,
+                  ),
           );
           rethrow;
         }
@@ -1683,7 +2145,14 @@ class FirestoreApi<T extends Object> {
     final docRef =
         findDocRef(id: id, collectionPathOverride: collectionPathOverride);
     _log.info(
-        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentSnapshot without converter and id: $id..');
+      message: 'Finding document snapshot..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: collectionPathOverride ?? _collectionPath(),
+              id: id,
+            ),
+    );
     return docRef.get(_getOptions);
   }
 
@@ -1701,7 +2170,13 @@ class FirestoreApi<T extends Object> {
   /// [findStreamWithConverter] method instead.
   Stream<QuerySnapshot<Map<String, dynamic>>> findStream() {
     _log.info(
-        '🔥 Finding ${_collectionPath()} CollectionReference Stream without converter..');
+      message: 'Finding stream..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: _collectionPath(),
+            ),
+    );
     return findCollection().snapshots();
   }
 
@@ -1723,7 +2198,14 @@ class FirestoreApi<T extends Object> {
     required String whereDescription,
   }) {
     _log.info(
-        '🔥 Finding ${_collectionPath()} Stream without converter where $whereDescription..');
+      message: 'Finding stream by query..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: _collectionPath(),
+              whereDescription: whereDescription,
+            ),
+    );
     return collectionReferenceQuery!(findCollection()).snapshots().map(
           (event) => event.docs.map((e) => e.data()).toList(),
         );
@@ -1748,8 +2230,14 @@ class FirestoreApi<T extends Object> {
     final docRef =
         findDocRef(id: id, collectionPathOverride: collectionPathOverride);
     _log.info(
-        '🔥 Finding ${collectionPathOverride ?? _collectionPath()} DocumentReference Stream '
-        'without converter and id: $id..');
+      message: 'Finding doc stream..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: collectionPathOverride ?? _collectionPath(),
+              id: id,
+            ),
+    );
     return docRef.snapshots();
   }
 
@@ -1766,7 +2254,15 @@ class FirestoreApi<T extends Object> {
     );
     final docRef =
         findDocRef(id: id, collectionPathOverride: collectionPathOverride);
-    _log.info('🔥 Checking if document exists with id: $id');
+    _log.info(
+      message: 'Checking if document exists..',
+      sensitiveData: _shouldNotSensitiveInfo
+          ? null
+          : SensitiveData(
+              path: collectionPathOverride ?? _collectionPath(),
+              id: id,
+            ),
+    );
     return (await docRef.get(_getOptions)).exists;
   }
 

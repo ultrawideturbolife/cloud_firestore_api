@@ -1,3 +1,7 @@
+## 0.0.11
+
+* **⚠️ Breaking:** Security update: logging now excludes sensitive data from being logged unless specified otherwise with `FirestoreApi.sensitiveLogLevel`. `FirestoreLogger` signature has been updated.
+
 ## 0.0.10
 
 * **⚠️ Breaking:** Updated cloud_firestore to 5.0.0 see breaking changes here https://pub.dev/packages/cloud_firestore/changelog.
