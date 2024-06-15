@@ -57,6 +57,6 @@ class SensitiveData {
         '${searchTermType != null ? 'searchTermType: $searchTermType, ' : ''}'
         '${type != null ? 'type: $type, ' : ''}'
         '${updateTimeStampType != null ? 'updateTimeStampType: $updateTimeStampType, ' : ''}'
-        '${data != null ? 'data: $data, ' : ''}';
+        '${data != null ? 'data: $data, ' : ''}}';
   }
 }
