@@ -1,3 +1,7 @@
+## 0.0.11+1
+
+* Removed unused variable.
+
 ## 0.0.11
 
 * **⚠️ Breaking:** Security update: logging now excludes sensitive data from being logged unless specified otherwise with `FirestoreApi.sensitiveLogLevel`. `FirestoreLogger` signature has been updated.

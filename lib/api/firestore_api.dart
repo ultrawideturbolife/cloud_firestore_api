@@ -56,7 +56,6 @@ class FirestoreApi<T extends Object> {
     bool isCollectionGroup = false,
     bool tryAddLocalDocumentReference = false,
     GetOptions? getOptions,
-    bool logSensitiveData = true,
     SensitiveLogLevel sensitiveLogLevel = SensitiveLogLevel.info,
   })  : _firebaseFirestore = firebaseFirestore,
         _collectionPath = collectionPath,
