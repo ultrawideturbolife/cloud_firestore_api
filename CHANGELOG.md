@@ -1,3 +1,7 @@
+## 0.0.11+2
+
+* Updated `SensitiveData.toString()`. 
+
 ## 0.0.11+1
 
 * Removed unused variable.
