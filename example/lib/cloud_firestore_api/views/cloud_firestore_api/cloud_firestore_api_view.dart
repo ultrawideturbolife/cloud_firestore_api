@@ -10,7 +10,7 @@ class CloudFirestoreApiView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<CloudFirestoreApiViewModel>(
-      builder: (context, model) {
+      builder: (context, model, isInitialised, child) {
         return const Scaffold(
           body: Center(
             child: Text('oi'),
