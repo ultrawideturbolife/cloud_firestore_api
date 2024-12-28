@@ -1,6 +1,18 @@
+## 0.0.11+6
+
+* Updated cloud_firestore dependency to ^5.6.0
+
+## 0.0.11+5
+
+* Updated cloud_firestore dependency to ^5.6.0
+
+## 0.0.11+3
+
+* Updated cloud_firestore dependency to ^4.15.4
+
 ## 0.0.11+2
 
-* Updated `SensitiveData.toString()`. 
+* Updated dependencies
 
 ## 0.0.11+1
 

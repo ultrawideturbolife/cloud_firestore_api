@@ -1,4 +1,4 @@
-library cloud_firestore_api;
+library;
 
 export 'abstracts/firestore_logger.dart';
 export 'abstracts/writeable.dart';
