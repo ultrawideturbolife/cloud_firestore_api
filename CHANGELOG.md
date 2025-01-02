@@ -1,3 +1,23 @@
+## 0.1.0
+
+* **⚠️ Breaking:** Migrated from FeedbackResponse to TurboResponse for better type safety and error handling
+  * Replaced FeedbackConfig with TurboConfig for simpler message configuration
+  * Removed FeedbackLevel and FeedbackType in favor of Success/Fail variants
+  * Added pattern matching support for response handling
+  * Improved error handling with dedicated error objects
+  * Added comprehensive test coverage
+  * Updated documentation with migration guide
+* **✨ New Features:**
+  * Added TurboConfig for configuring response messages with singular/plural forms
+  * Added TurboResponseGenerator for type-safe response generation
+  * Added pattern matching support for cleaner response handling
+  * Added comprehensive test coverage for all new features
+* **📝 Documentation:**
+  * Added detailed migration guide from FeedbackResponse
+  * Added examples for all response types
+  * Added best practices section
+  * Updated all API documentation
+
 ## 0.0.11+6
 
 * Updated cloud_firestore dependency to ^5.6.0

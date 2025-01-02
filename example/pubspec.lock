@@ -96,14 +96,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.1"
-  feedback_response:
-    dependency: transitive
-    description:
-      name: feedback_response
-      sha256: b091d91c65eec1d8f73c23d45028d416884e599b7e11acec4a79847685924955
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.8"
   firebase_core:
     dependency: "direct main"
     description:
@@ -292,6 +284,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.2"
+  turbo_response:
+    dependency: transitive
+    description:
+      name: turbo_response
+      sha256: c7251e9fc475fa78acc6713a24d561a6be83833f7b00325ddf1429430386f4c5
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0+1"
   vector_math:
     dependency: transitive
     description:

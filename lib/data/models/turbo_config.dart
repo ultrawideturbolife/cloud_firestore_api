@@ -1,19 +1,17 @@
-import 'package:feedback_response/feedback_response.dart';
-import 'package:cloud_firestore_api/util/response_generator.dart';
+import 'package:turbo_response/turbo_response.dart';
 
-/// Config class to provide usable error message to your [FeedbackResponse]'s.
+/// Config class to provide usable messages for your [TurboResponse]'s.
 ///
 /// Provide this config in different languages to easily show feedback to your user when certain
-/// actions have succeeded or failed.
-class FeedbackConfig {
-  const FeedbackConfig({
+/// actions have succeeded or failed. This is an enhanced version of the old FeedbackConfig
+/// with better type safety and error handling.
+class TurboConfig {
+  const TurboConfig({
     String? singularForm,
     String? pluralForm,
     this.createSuccessTitle = 'Create success',
-    String createSuccessSingularMessage =
-        '${_Forms._singularForm} has been created.',
-    String createSuccessPluralMessage =
-        '${_Forms._pluralForm} have been created.',
+    String createSuccessSingularMessage = '${_Forms._singularForm} has been created.',
+    String createSuccessPluralMessage = '${_Forms._pluralForm} have been created.',
     this.createFailedTitle = 'Create failed',
     String createFailedSingularMessage =
         'Unable to create ${_Forms._singularForm}, please try again later.',
@@ -28,20 +26,16 @@ class FeedbackConfig {
     String searchFailedPluralMessage =
         'Unable to find ${_Forms._pluralForm}, please try again later.',
     this.updateSuccessTitle = 'Update success',
-    String updateSuccessSingularMessage =
-        '${_Forms._singularForm} has been updated.',
-    String updateSuccessPluralMessage =
-        '${_Forms._pluralForm} have been updated.',
+    String updateSuccessSingularMessage = '${_Forms._singularForm} has been updated.',
+    String updateSuccessPluralMessage = '${_Forms._pluralForm} have been updated.',
     this.updateFailedTitle = 'Update failed',
     String updateFailedSingularMessage =
         'Unable to update ${_Forms._singularForm}, please try again later.',
     String updateFailedPluralMessage =
         'Unable to update ${_Forms._pluralForm}, please try again later.',
     this.deleteSuccessTitle = 'Delete success',
-    String deleteSuccessSingularMessage =
-        '${_Forms._singularForm} has been deleted.',
-    String deleteSuccessPluralMessage =
-        '${_Forms._pluralForm} have been deleted.',
+    String deleteSuccessSingularMessage = '${_Forms._singularForm} has been deleted.',
+    String deleteSuccessPluralMessage = '${_Forms._pluralForm} have been deleted.',
     this.deleteFailedTitle = 'Delete failed',
     String deleteFailedSingularMessage =
         'Unable to delete ${_Forms._singularForm}, please try again later.',
@@ -69,7 +63,7 @@ class FeedbackConfig {
   /// Holds a custom singular form, preferably in lowercase.
   final String? _singularForm;
 
-  /// Holds a custom singular form, preferably in lowercase.
+  /// Holds a custom plural form, preferably in lowercase.
   final String? _pluralForm;
 
   /// Holds the title that's used for displaying 'create' success messages.
@@ -84,15 +78,13 @@ class FeedbackConfig {
   /// Holds the singular message that's used for displaying 'create' success messages.
   String get createSuccessSingularMessage => (_singularForm == null
           ? _createSuccessSingularMessage
-          : _createSuccessSingularMessage.replaceAll(
-              _Forms._singularForm, _singularForm))
+          : _createSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
       .capitalize;
 
   /// Holds the plural message that's used for displaying 'create' success messages.
   String get createSuccessPluralMessage => (_pluralForm == null
           ? _createSuccessPluralMessage
-          : _createSuccessPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _createSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
 
   /// Holds the title that's used for displaying 'create' failed messages.
@@ -107,15 +99,13 @@ class FeedbackConfig {
   /// Holds the singular message that's used for displaying 'create' failed messages.
   String get createFailedSingularMessage => (_singularForm == null
           ? _createFailedSingularMessage
-          : _createFailedSingularMessage.replaceAll(
-              _Forms._singularForm, _singularForm))
+          : _createFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
       .capitalize;
 
   /// Holds the plural message that's used for displaying 'create' failed messages.
   String get createFailedPluralMessage => (_pluralForm == null
           ? _createFailedPluralMessage
-          : _createFailedPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _createFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
 
   /// Holds the title that's used for displaying 'search' success messages.
@@ -130,15 +120,13 @@ class FeedbackConfig {
   /// Holds the singular message that's used for displaying 'search' success messages.
   String get searchSuccessSingularMessage => (_singularForm == null
           ? _searchSuccessSingularMessage
-          : _searchSuccessSingularMessage.replaceAll(
-              _Forms._singularForm, _singularForm))
+          : _searchSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
       .capitalize;
 
   /// Holds the plural message that's used for displaying 'search' success messages.
   String get searchSuccessPluralMessage => (_pluralForm == null
           ? _searchSuccessPluralMessage
-          : _searchSuccessPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _searchSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
 
   /// Holds the title that's used for displaying 'search' failed messages.
@@ -153,15 +141,13 @@ class FeedbackConfig {
   /// Holds the singular message that's used for displaying 'search' failed messages.
   String get searchFailedSingularMessage => (_singularForm == null
           ? _searchFailedSingularMessage
-          : _searchFailedSingularMessage.replaceAll(
-              _Forms._singularForm, _singularForm))
+          : _searchFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
       .capitalize;
 
   /// Holds the plural message that's used for displaying 'search' failed messages.
   String get searchFailedPluralMessage => (_pluralForm == null
           ? _searchFailedPluralMessage
-          : _searchFailedPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _searchFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
 
   /// Holds the title that's used for displaying 'update' success messages.
@@ -176,15 +162,13 @@ class FeedbackConfig {
   /// Holds the singular message that's used for displaying 'update' success messages.
   String get updateSuccessSingularMessage => (_singularForm == null
           ? _updateSuccessSingularMessage
-          : _updateSuccessSingularMessage.replaceAll(
-              _Forms._singularForm, _singularForm))
+          : _updateSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
       .capitalize;
 
   /// Holds the plural message that's used for displaying 'update' success messages.
   String get updateSuccessPluralMessage => (_pluralForm == null
           ? _updateSuccessPluralMessage
-          : _updateSuccessPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _updateSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
 
   /// Holds the title that's used for displaying 'update' failed messages.
@@ -199,15 +183,13 @@ class FeedbackConfig {
   /// Holds the singular message that's used for displaying 'update' failed messages.
   String get updateFailedSingularMessage => (_singularForm == null
           ? _updateFailedSingularMessage
-          : _updateFailedSingularMessage.replaceAll(
-              _Forms._singularForm, _singularForm))
+          : _updateFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
       .capitalize;
 
   /// Holds the plural message that's used for displaying 'update' failed messages.
   String get updateFailedPluralMessage => (_pluralForm == null
           ? _updateFailedPluralMessage
-          : _updateFailedPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _updateFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
 
   /// Holds the title that's used for displaying 'delete' success messages.
@@ -221,15 +203,14 @@ class FeedbackConfig {
 
   /// Holds the singular message that's used for displaying 'delete' success messages.
   String get deleteSuccessSingularMessage => (_singularForm == null
-      ? _deleteSuccessSingularMessage
-      : _deleteSuccessSingularMessage.replaceAll(
-          _Forms._singularForm, _singularForm));
+          ? _deleteSuccessSingularMessage
+          : _deleteSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
+      .capitalize;
 
   /// Holds the plural message that's used for displaying 'delete' success messages.
   String get deleteSuccessPluralMessage => (_pluralForm == null
           ? _deleteSuccessPluralMessage
-          : _deleteSuccessPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _deleteSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
 
   /// Holds the title that's used for displaying 'delete' failed messages.
@@ -244,41 +225,26 @@ class FeedbackConfig {
   /// Holds the singular message that's used for displaying 'delete' failed messages.
   String get deleteFailedSingularMessage => (_singularForm == null
           ? _deleteFailedSingularMessage
-          : _deleteFailedSingularMessage.replaceAll(
-              _Forms._singularForm, _singularForm))
+          : _deleteFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
       .capitalize;
 
   /// Holds the plural message that's used for displaying 'delete' failed messages.
   String get deleteFailedPluralMessage => (_pluralForm == null
           ? _deleteFailedPluralMessage
-          : _deleteFailedPluralMessage.replaceAll(
-              _Forms._pluralForm, _pluralForm))
+          : _deleteFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
       .capitalize;
-
-  /// Used to generate and fetch a response config that provides [FeedbackResponse]'s based on this [FeedbackConfig].
-  ResponseGenerator get responseConfig =>
-      ResponseGenerator(feedbackConfig: this);
 }
 
-/// Holds the default values for singular and plural forms.
-abstract class _Forms {
-  /// Holds the default singular form for the [FeedbackConfig].
-  ///
-  /// This is also used to find and replace sentences with custom singular forms.
-  static const String _singularForm = 'entity';
-
-  /// Holds the default plural form for the [FeedbackConfig].
-  ///
-  /// This is also used to find and replace sentences with custom plural forms.
-  static const String _pluralForm = 'entities';
+/// Private class to hold form constants.
+class _Forms {
+  static const _singularForm = 'item';
+  static const _pluralForm = 'items';
 }
 
+/// Extension to capitalize strings.
 extension on String {
-  /// Used to capitalize sentences.
   String get capitalize {
-    if (isEmpty) {
-      return '';
-    }
+    if (isEmpty) return this;
     return '${this[0].toUpperCase()}${substring(1)}';
   }
 }
