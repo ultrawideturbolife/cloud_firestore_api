@@ -1,3 +1,23 @@
+
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore_api/abstracts/firestore_logger.dart';
+import 'package:cloud_firestore_api/abstracts/writeable.dart';
+import 'package:cloud_firestore_api/data/enums/search_term_type.dart';
+import 'package:cloud_firestore_api/data/enums/sensitive_log_level.dart';
+import 'package:cloud_firestore_api/data/enums/timestamp_type.dart';
+import 'package:cloud_firestore_api/data/exceptions/invalid_json_exception.dart';
+import 'package:cloud_firestore_api/data/models/sensitive_data.dart';
+import 'package:cloud_firestore_api/data/models/turbo_config.dart';
+
+import 'package:cloud_firestore_api/data/models/write_batch_with_reference.dart';
+
+import 'package:cloud_firestore_api/util/firestore_default_logger.dart';
+import 'package:cloud_firestore_api/util/turbo_response_generator.dart';
+import 'package:turbo_response/turbo_response.dart';
+part 'package:cloud_firestore_api/data/extensions/extensions.dart';
+
 class FirestoreApi<T extends Object> {
   /// The [FirestoreApi] requires only a [firebaseFirestore] instance and a [collectionPath] to
   /// work initially.
@@ -2203,25 +2223,6 @@ class FirestoreApi<T extends Object> {
   /// A new document
   DocumentReference get doc => collection.doc();
 }
-
-import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_firestore_api/abstracts/firestore_logger.dart';
-import 'package:cloud_firestore_api/abstracts/writeable.dart';
-import 'package:cloud_firestore_api/data/enums/search_term_type.dart';
-import 'package:cloud_firestore_api/data/enums/sensitive_log_level.dart';
-import 'package:cloud_firestore_api/data/enums/timestamp_type.dart';
-import 'package:cloud_firestore_api/data/exceptions/invalid_json_exception.dart';
-import 'package:cloud_firestore_api/data/models/sensitive_data.dart';
-import 'package:cloud_firestore_api/data/models/turbo_config.dart';
-
-import 'package:cloud_firestore_api/data/models/write_batch_with_reference.dart';
-
-import 'package:cloud_firestore_api/util/firestore_default_logger.dart';
-import 'package:cloud_firestore_api/util/turbo_response_generator.dart';
-import 'package:turbo_response/turbo_response.dart';
-part 'package:cloud_firestore_api/data/extensions/extensions.dart';
 
 typedef CollectionReferenceQuery<T> = Query<T> Function(Query<T> collectionReference);
 
