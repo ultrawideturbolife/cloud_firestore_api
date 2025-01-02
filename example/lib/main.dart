@@ -3,8 +3,10 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_firestore_api/abstracts/writeable.dart';
 import 'package:cloud_firestore_api/api/firestore_api.dart';
+import 'package:cloud_firestore_api/data/models/turbo_config.dart';
 import 'package:example/cloud_firestore_api/views/cloud_firestore_api/cloud_firestore_api_view.dart';
 import 'package:flutter/material.dart';
+import 'package:turbo_response/turbo_response.dart';
 
 import 'cloud_firestore_api/data/dtos/example_dto.dart';
 
@@ -29,11 +31,15 @@ class ExampleAPI extends FirestoreApi<ExampleDTO> {
           collectionPath: () => 'Examples',
           firebaseFirestore: FirebaseFirestore.instance,
           fromJson: ExampleDTO.fromJson,
+          config: TurboConfig(
+            singularForm: 'example',
+            pluralForm: 'examples',
+          ),
         );
 
-  void createExample() {
+  Future<TurboResponse<ExampleDTO>> createExample() async {
     final random = Random();
-    createDoc(
+    final response = await createDoc(
       writeable: CreateExampleRequest(
         exampleDTO: ExampleDTO(
           thisIsABoolean: random.nextBool(),
@@ -42,6 +48,24 @@ class ExampleAPI extends FirestoreApi<ExampleDTO> {
         ),
       ),
     );
+
+    if (response is Success<DocumentReference>) {
+      final docRef = response.result;
+      final docResponse = await findByIdWithConverter(id: docRef.id);
+      return docResponse;
+    } else if (response is Fail<DocumentReference>) {
+      return TurboResponse<ExampleDTO>.fail(
+        error: response.error,
+      );
+    } else {
+      return TurboResponse<ExampleDTO>.fail(
+        error: 'Unknown error occurred',
+      );
+    }
+  }
+
+  Future<TurboResponse<List<ExampleDTO>>> getExamples() {
+    return findAllWithConverter();
   }
 
   static ExampleAPI get locate => ExampleAPI();
@@ -53,7 +77,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Cloud Firestore API Example',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

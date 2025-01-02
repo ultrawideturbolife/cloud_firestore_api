@@ -10,7 +10,7 @@ dependencies:
     sdk: flutter
   cloud_firestore: ^5.6.0
   # Type-safe response handling with pattern matching support
-  turbo_response: ^1.0.0
+  turbo_response: ^0.1.0+1
 
 dev_dependencies:
   flutter_test:
