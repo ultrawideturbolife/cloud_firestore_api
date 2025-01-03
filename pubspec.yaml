@@ -7,15 +7,15 @@ environment:
   sdk: '>=3.3.0 <4.0.0'
 
 dependencies:
-  cloud_firestore: ^4.13.6
+  cloud_firestore: ^5.6.0
   flutter:
     sdk: flutter
-  turbo_response: ^0.2.0
+  turbo_response: ^0.2.1
 
 dev_dependencies:
-  fake_cloud_firestore: ^2.5.2
+  fake_cloud_firestore: ^3.1.0
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.1
+  flutter_lints: ^5.0.0
 
 flutter:

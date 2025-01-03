@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_firestore_api/abstracts/writeable.dart';
 import 'package:cloud_firestore_api/api/firestore_api.dart';
 import 'package:cloud_firestore_api/data/enums/search_term_type.dart';
