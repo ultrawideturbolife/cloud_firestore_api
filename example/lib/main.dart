@@ -1,43 +1,63 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:example/firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
+import 'dart:math';
 
-import 'services/tasks_service.dart';
-import 'views/task_list_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore_api/abstracts/writeable.dart';
+import 'package:cloud_firestore_api/api/firestore_api.dart';
+import 'package:example/cloud_firestore_api/views/cloud_firestore_api/cloud_firestore_api_view.dart';
+import 'package:flutter/material.dart';
+
+import 'cloud_firestore_api/data/dtos/example_dto.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase with emulator configuration
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Configure Firestore to use emulator
-  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-
-  // Register services
-  GetIt.I.registerLazySingleton<TasksService>(
-    () => TasksService(firestore: FirebaseFirestore.instance),
-  );
-
-  runApp(const TaskManagerApp());
+  runApp(const MyApp());
 }
 
-class TaskManagerApp extends StatelessWidget {
-  const TaskManagerApp({super.key});
+class CreateExampleRequest extends Writeable {
+  CreateExampleRequest({
+    required this.exampleDTO,
+  });
+
+  final ExampleDTO exampleDTO;
+
+  @override
+  Map<String, dynamic> toJson() => exampleDTO.toJson();
+}
+
+class ExampleAPI extends FirestoreApi<ExampleDTO> {
+  ExampleAPI()
+      : super(
+          collectionPath: () => 'Examples',
+          firebaseFirestore: FirebaseFirestore.instance,
+          fromJson: ExampleDTO.fromJson,
+        );
+
+  void createExample() {
+    final random = Random();
+    createDoc(
+      writeable: CreateExampleRequest(
+        exampleDTO: ExampleDTO(
+          thisIsABoolean: random.nextBool(),
+          thisIsANumber: random.nextDouble(),
+          thisIsAString: ['yes', 'maybe'][random.nextInt(2)],
+        ),
+      ),
+    );
+  }
+
+  static ExampleAPI get locate => ExampleAPI();
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Task Manager',
+      title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: const TaskListScreen(),
+      home: const CloudFirestoreApiView(),
     );
   }
 }

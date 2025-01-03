@@ -1,3 +1,7 @@
+## 0.1.1
+
+* **✨ New:** Added `genId` getter to `FirestoreApi` for generating Firestore document IDs without creating document references
+
 ## 0.1.0
 
 * **⚠️ Breaking:** Migrated from FeedbackResponse to TurboResponse for better type safety and error handling
@@ -12,11 +16,13 @@
   * Added TurboResponseGenerator for type-safe response generation
   * Added pattern matching support for cleaner response handling
   * Added comprehensive test coverage for all new features
+  * Added `genId` getter to `FirestoreApi` for generating Firestore document IDs without creating document references
 * **📝 Documentation:**
   * Added detailed migration guide from FeedbackResponse
   * Added examples for all response types
   * Added best practices section
   * Updated all API documentation
+  * Added documentation for document ID generation methods
 
 ## 0.0.11+6
 

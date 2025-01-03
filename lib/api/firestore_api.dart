@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -2222,6 +2221,9 @@ class FirestoreApi<T extends Object> {
 
   /// A new document
   DocumentReference get doc => collection.doc();
+
+  /// Generates a new document ID without creating the document
+  String get genId => doc.id;
 }
 
 typedef CollectionReferenceQuery<T> = Query<T> Function(Query<T> collectionReference);

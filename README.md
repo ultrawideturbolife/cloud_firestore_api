@@ -13,6 +13,7 @@ Main features include:
 - 🦾 All methods are available with or without data converters.
 - 🏘️ All methods work with collection groups as well.
 - 💡 Able to save local id and documentReference access of your documents without adding them to your online versions.
+- 🆔 Generate Firestore document IDs without creating documents.
 
 # ❤️‍🔥 FirestoreApi Explained
 
@@ -247,3 +248,22 @@ If you're upgrading from a previous version that used `FeedbackResponse`, here's
 # 🔎 Find Methods
 
 [Rest of the existing documentation...]
+
+# 🔑 Document ID Generation
+
+The `FirestoreApi` provides two ways to work with document IDs:
+
+1. Using `doc` getter:
+   ```dart
+   // Get a new document reference
+   final docRef = api.doc;
+   // The ID is available via docRef.id
+   ```
+
+2. Using `genId` getter:
+   ```dart
+   // Generate just the ID without creating a document reference
+   final newId = api.genId;
+   ```
+
+Both methods generate valid Firestore document IDs, but `genId` is more efficient when you only need the ID without the document reference.
