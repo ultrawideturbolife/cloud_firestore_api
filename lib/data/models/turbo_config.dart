@@ -1,250 +1,216 @@
-import 'package:turbo_response/turbo_response.dart';
+import 'package:flutter/foundation.dart';
 
-/// Config class to provide usable messages for your [TurboResponse]'s.
-///
-/// Provide this config in different languages to easily show feedback to your user when certain
-/// actions have succeeded or failed. This is an enhanced version of the old FeedbackConfig
-/// with better type safety and error handling.
+/// Used to configure the feedback messages of the [FirestoreApi].
+@immutable
 class TurboConfig {
+  /// Creates a new instance of [TurboConfig].
   const TurboConfig({
-    String? singularForm,
-    String? pluralForm,
-    this.createSuccessTitle = 'Create success',
-    String createSuccessSingularMessage = '${_Forms._singularForm} has been created.',
-    String createSuccessPluralMessage = '${_Forms._pluralForm} have been created.',
-    this.createFailedTitle = 'Create failed',
-    String createFailedSingularMessage =
-        'Unable to create ${_Forms._singularForm}, please try again later.',
-    String createFailedPluralMessage =
-        'Unable to create ${_Forms._pluralForm}, please try again later.',
-    this.searchSuccessTitle = 'Search success',
-    String searchSuccessSingularMessage = '${_Forms._singularForm} was found.',
-    String searchSuccessPluralMessage = '${_Forms._pluralForm} were found.',
-    this.searchFailedTitle = 'Search failed',
-    String searchFailedSingularMessage =
-        'Unable to find ${_Forms._singularForm}, please try again later.',
-    String searchFailedPluralMessage =
-        'Unable to find ${_Forms._pluralForm}, please try again later.',
-    this.updateSuccessTitle = 'Update success',
-    String updateSuccessSingularMessage = '${_Forms._singularForm} has been updated.',
-    String updateSuccessPluralMessage = '${_Forms._pluralForm} have been updated.',
-    this.updateFailedTitle = 'Update failed',
-    String updateFailedSingularMessage =
-        'Unable to update ${_Forms._singularForm}, please try again later.',
-    String updateFailedPluralMessage =
-        'Unable to update ${_Forms._pluralForm}, please try again later.',
-    this.deleteSuccessTitle = 'Delete success',
-    String deleteSuccessSingularMessage = '${_Forms._singularForm} has been deleted.',
-    String deleteSuccessPluralMessage = '${_Forms._pluralForm} have been deleted.',
-    this.deleteFailedTitle = 'Delete failed',
-    String deleteFailedSingularMessage =
-        'Unable to delete ${_Forms._singularForm}, please try again later.',
-    String deleteFailedPluralMessage =
-        'Unable to delete ${_Forms._pluralForm}, please try again later.',
-  })  : _singularForm = singularForm,
-        _pluralForm = pluralForm,
-        _createSuccessSingularMessage = createSuccessSingularMessage,
-        _createSuccessPluralMessage = createSuccessPluralMessage,
-        _createFailedSingularMessage = createFailedSingularMessage,
-        _createFailedPluralMessage = createFailedPluralMessage,
-        _searchSuccessSingularMessage = searchSuccessSingularMessage,
-        _searchSuccessPluralMessage = searchSuccessPluralMessage,
-        _searchFailedSingularMessage = searchFailedSingularMessage,
-        _searchFailedPluralMessage = searchFailedPluralMessage,
-        _updateSuccessSingularMessage = updateSuccessSingularMessage,
-        _updateSuccessPluralMessage = updateSuccessPluralMessage,
-        _updateFailedSingularMessage = updateFailedSingularMessage,
-        _updateFailedPluralMessage = updateFailedPluralMessage,
-        _deleteSuccessSingularMessage = deleteSuccessSingularMessage,
-        _deleteSuccessPluralMessage = deleteSuccessPluralMessage,
-        _deleteFailedSingularMessage = deleteFailedSingularMessage,
-        _deleteFailedPluralMessage = deleteFailedPluralMessage;
+    this.singularForm = 'item',
+    this.pluralForm = 'items',
+    this.createSuccessTitle,
+    this.createSuccessSingularMessage,
+    this.createSuccessPluralMessage,
+    this.createFailedTitle,
+    this.createFailedSingularMessage,
+    this.createFailedPluralMessage,
+    this.searchSuccessTitle,
+    this.searchSuccessSingularMessage,
+    this.searchSuccessPluralMessage,
+    this.searchFailedTitle,
+    this.searchFailedSingularMessage,
+    this.searchFailedPluralMessage,
+    this.updateSuccessTitle,
+    this.updateSuccessSingularMessage,
+    this.updateSuccessPluralMessage,
+    this.updateFailedTitle,
+    this.updateFailedSingularMessage,
+    this.updateFailedPluralMessage,
+    this.deleteSuccessTitle,
+    this.deleteSuccessSingularMessage,
+    this.deleteSuccessPluralMessage,
+    this.deleteFailedTitle,
+    this.deleteFailedSingularMessage,
+    this.deleteFailedPluralMessage,
+  });
 
-  /// Holds a custom singular form, preferably in lowercase.
-  final String? _singularForm;
+  /// Used to determine the singular form of the item being handled.
+  ///
+  /// If not provided, defaults to 'item'.
+  final String singularForm;
 
-  /// Holds a custom plural form, preferably in lowercase.
-  final String? _pluralForm;
+  /// Used to determine the plural form of the item being handled.
+  ///
+  /// If not provided, defaults to 'items'.
+  final String pluralForm;
+
+  String get _effectiveSingularForm => singularForm.isEmpty ? 'item' : singularForm;
+  String get _effectivePluralForm => pluralForm.isEmpty ? 'items' : pluralForm;
 
   /// Holds the title that's used for displaying 'create' success messages.
-  final String createSuccessTitle;
+  final String? createSuccessTitle;
 
-  /// Holds the raw singular message that's used for displaying 'create' success messages.
-  final String _createSuccessSingularMessage;
+  /// Holds the message that's used for displaying 'create' success messages in singular form.
+  final String? createSuccessSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'create' success messages.
-  final String _createSuccessPluralMessage;
-
-  /// Holds the singular message that's used for displaying 'create' success messages.
-  String get createSuccessSingularMessage => (_singularForm == null
-          ? _createSuccessSingularMessage
-          : _createSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
-
-  /// Holds the plural message that's used for displaying 'create' success messages.
-  String get createSuccessPluralMessage => (_pluralForm == null
-          ? _createSuccessPluralMessage
-          : _createSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
+  /// Holds the message that's used for displaying 'create' success messages in plural form.
+  final String? createSuccessPluralMessage;
 
   /// Holds the title that's used for displaying 'create' failed messages.
-  final String createFailedTitle;
+  final String? createFailedTitle;
 
-  /// Holds the raw singular message that's used for displaying 'create' failed messages.
-  final String _createFailedSingularMessage;
+  /// Holds the message that's used for displaying 'create' failed messages in singular form.
+  final String? createFailedSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'create' failed messages.
-  final String _createFailedPluralMessage;
-
-  /// Holds the singular message that's used for displaying 'create' failed messages.
-  String get createFailedSingularMessage => (_singularForm == null
-          ? _createFailedSingularMessage
-          : _createFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
-
-  /// Holds the plural message that's used for displaying 'create' failed messages.
-  String get createFailedPluralMessage => (_pluralForm == null
-          ? _createFailedPluralMessage
-          : _createFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
+  /// Holds the message that's used for displaying 'create' failed messages in plural form.
+  final String? createFailedPluralMessage;
 
   /// Holds the title that's used for displaying 'search' success messages.
-  final String searchSuccessTitle;
+  final String? searchSuccessTitle;
 
-  /// Holds the raw singular message that's used for displaying 'search' success messages.
-  final String _searchSuccessSingularMessage;
+  /// Holds the message that's used for displaying 'search' success messages in singular form.
+  final String? searchSuccessSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'search' success messages.
-  final String _searchSuccessPluralMessage;
-
-  /// Holds the singular message that's used for displaying 'search' success messages.
-  String get searchSuccessSingularMessage => (_singularForm == null
-          ? _searchSuccessSingularMessage
-          : _searchSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
-
-  /// Holds the plural message that's used for displaying 'search' success messages.
-  String get searchSuccessPluralMessage => (_pluralForm == null
-          ? _searchSuccessPluralMessage
-          : _searchSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
+  /// Holds the message that's used for displaying 'search' success messages in plural form.
+  final String? searchSuccessPluralMessage;
 
   /// Holds the title that's used for displaying 'search' failed messages.
-  final String searchFailedTitle;
+  final String? searchFailedTitle;
 
-  /// Holds the raw singular message that's used for displaying 'search' failed messages.
-  final String _searchFailedSingularMessage;
+  /// Holds the message that's used for displaying 'search' failed messages in singular form.
+  final String? searchFailedSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'search' failed messages.
-  final String _searchFailedPluralMessage;
-
-  /// Holds the singular message that's used for displaying 'search' failed messages.
-  String get searchFailedSingularMessage => (_singularForm == null
-          ? _searchFailedSingularMessage
-          : _searchFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
-
-  /// Holds the plural message that's used for displaying 'search' failed messages.
-  String get searchFailedPluralMessage => (_pluralForm == null
-          ? _searchFailedPluralMessage
-          : _searchFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
+  /// Holds the message that's used for displaying 'search' failed messages in plural form.
+  final String? searchFailedPluralMessage;
 
   /// Holds the title that's used for displaying 'update' success messages.
-  final String updateSuccessTitle;
+  final String? updateSuccessTitle;
 
-  /// Holds the raw singular message that's used for displaying 'update' success messages.
-  final String _updateSuccessSingularMessage;
+  /// Holds the message that's used for displaying 'update' success messages in singular form.
+  final String? updateSuccessSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'update' success messages.
-  final String _updateSuccessPluralMessage;
-
-  /// Holds the singular message that's used for displaying 'update' success messages.
-  String get updateSuccessSingularMessage => (_singularForm == null
-          ? _updateSuccessSingularMessage
-          : _updateSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
-
-  /// Holds the plural message that's used for displaying 'update' success messages.
-  String get updateSuccessPluralMessage => (_pluralForm == null
-          ? _updateSuccessPluralMessage
-          : _updateSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
+  /// Holds the message that's used for displaying 'update' success messages in plural form.
+  final String? updateSuccessPluralMessage;
 
   /// Holds the title that's used for displaying 'update' failed messages.
-  final String updateFailedTitle;
+  final String? updateFailedTitle;
 
-  /// Holds the raw singular message that's used for displaying 'update' failed messages.
-  final String _updateFailedSingularMessage;
+  /// Holds the message that's used for displaying 'update' failed messages in singular form.
+  final String? updateFailedSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'update' failed messages.
-  final String _updateFailedPluralMessage;
-
-  /// Holds the singular message that's used for displaying 'update' failed messages.
-  String get updateFailedSingularMessage => (_singularForm == null
-          ? _updateFailedSingularMessage
-          : _updateFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
-
-  /// Holds the plural message that's used for displaying 'update' failed messages.
-  String get updateFailedPluralMessage => (_pluralForm == null
-          ? _updateFailedPluralMessage
-          : _updateFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
+  /// Holds the message that's used for displaying 'update' failed messages in plural form.
+  final String? updateFailedPluralMessage;
 
   /// Holds the title that's used for displaying 'delete' success messages.
-  final String deleteSuccessTitle;
+  final String? deleteSuccessTitle;
 
-  /// Holds the raw singular message that's used for displaying 'delete' success messages.
-  final String _deleteSuccessSingularMessage;
+  /// Holds the message that's used for displaying 'delete' success messages in singular form.
+  final String? deleteSuccessSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'delete' success messages.
-  final String _deleteSuccessPluralMessage;
-
-  /// Holds the singular message that's used for displaying 'delete' success messages.
-  String get deleteSuccessSingularMessage => (_singularForm == null
-          ? _deleteSuccessSingularMessage
-          : _deleteSuccessSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
-
-  /// Holds the plural message that's used for displaying 'delete' success messages.
-  String get deleteSuccessPluralMessage => (_pluralForm == null
-          ? _deleteSuccessPluralMessage
-          : _deleteSuccessPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
+  /// Holds the message that's used for displaying 'delete' success messages in plural form.
+  final String? deleteSuccessPluralMessage;
 
   /// Holds the title that's used for displaying 'delete' failed messages.
-  final String deleteFailedTitle;
+  final String? deleteFailedTitle;
 
-  /// Holds the raw singular message that's used for displaying 'delete' failed messages.
-  final String _deleteFailedSingularMessage;
+  /// Holds the message that's used for displaying 'delete' failed messages in singular form.
+  final String? deleteFailedSingularMessage;
 
-  /// Holds the raw plural message that's used for displaying 'delete' failed messages.
-  final String _deleteFailedPluralMessage;
+  /// Holds the message that's used for displaying 'delete' failed messages in plural form.
+  final String? deleteFailedPluralMessage;
 
-  /// Holds the singular message that's used for displaying 'delete' failed messages.
-  String get deleteFailedSingularMessage => (_singularForm == null
-          ? _deleteFailedSingularMessage
-          : _deleteFailedSingularMessage.replaceAll(_Forms._singularForm, _singularForm))
-      .capitalize;
+  /// The title that's used for displaying 'create' success messages.
+  String get effectiveCreateSuccessTitle => createSuccessTitle ?? 'Create success';
 
-  /// Holds the plural message that's used for displaying 'delete' failed messages.
-  String get deleteFailedPluralMessage => (_pluralForm == null
-          ? _deleteFailedPluralMessage
-          : _deleteFailedPluralMessage.replaceAll(_Forms._pluralForm, _pluralForm))
-      .capitalize;
-}
+  /// The message that's used for displaying 'create' success messages in singular form.
+  String get effectiveCreateSuccessSingularMessage =>
+      createSuccessSingularMessage ?? '${_effectiveSingularForm} has been created.';
 
-/// Private class to hold form constants.
-class _Forms {
-  static const _singularForm = 'item';
-  static const _pluralForm = 'items';
-}
+  /// The message that's used for displaying 'create' success messages in plural form.
+  String get effectiveCreateSuccessPluralMessage =>
+      createSuccessPluralMessage ?? '${_effectivePluralForm} have been created.';
 
-/// Extension to capitalize strings.
-extension on String {
-  String get capitalize {
-    if (isEmpty) return this;
-    return '${this[0].toUpperCase()}${substring(1)}';
-  }
+  /// The title that's used for displaying 'create' failed messages.
+  String get effectiveCreateFailedTitle => createFailedTitle ?? 'Create failed';
+
+  /// The message that's used for displaying 'create' failed messages in singular form.
+  String get effectiveCreateFailedSingularMessage =>
+      createFailedSingularMessage ??
+      'Unable to create ${_effectiveSingularForm}, please try again later.';
+
+  /// The message that's used for displaying 'create' failed messages in plural form.
+  String get effectiveCreateFailedPluralMessage =>
+      createFailedPluralMessage ??
+      'Unable to create ${_effectivePluralForm}, please try again later.';
+
+  /// The title that's used for displaying 'search' success messages.
+  String get effectiveSearchSuccessTitle => searchSuccessTitle ?? 'Search success';
+
+  /// The message that's used for displaying 'search' success messages in singular form.
+  String get effectiveSearchSuccessSingularMessage =>
+      searchSuccessSingularMessage ?? '${_effectiveSingularForm} was found.';
+
+  /// The message that's used for displaying 'search' success messages in plural form.
+  String get effectiveSearchSuccessPluralMessage =>
+      searchSuccessPluralMessage ?? '${_effectivePluralForm} were found.';
+
+  /// The title that's used for displaying 'search' failed messages.
+  String get effectiveSearchFailedTitle => searchFailedTitle ?? 'Search failed';
+
+  /// The message that's used for displaying 'search' failed messages in singular form.
+  String get effectiveSearchFailedSingularMessage =>
+      searchFailedSingularMessage ??
+      'Unable to find ${_effectiveSingularForm}, please try again later.';
+
+  /// The message that's used for displaying 'search' failed messages in plural form.
+  String get effectiveSearchFailedPluralMessage =>
+      searchFailedPluralMessage ??
+      'Unable to find ${_effectivePluralForm}, please try again later.';
+
+  /// The title that's used for displaying 'update' success messages.
+  String get effectiveUpdateSuccessTitle => updateSuccessTitle ?? 'Update success';
+
+  /// The message that's used for displaying 'update' success messages in singular form.
+  String get effectiveUpdateSuccessSingularMessage =>
+      updateSuccessSingularMessage ?? '${_effectiveSingularForm} has been updated.';
+
+  /// The message that's used for displaying 'update' success messages in plural form.
+  String get effectiveUpdateSuccessPluralMessage =>
+      updateSuccessPluralMessage ?? '${_effectivePluralForm} have been updated.';
+
+  /// The title that's used for displaying 'update' failed messages.
+  String get effectiveUpdateFailedTitle => updateFailedTitle ?? 'Update failed';
+
+  /// The message that's used for displaying 'update' failed messages in singular form.
+  String get effectiveUpdateFailedSingularMessage =>
+      updateFailedSingularMessage ??
+      'Unable to update ${_effectiveSingularForm}, please try again later.';
+
+  /// The message that's used for displaying 'update' failed messages in plural form.
+  String get effectiveUpdateFailedPluralMessage =>
+      updateFailedPluralMessage ??
+      'Unable to update ${_effectivePluralForm}, please try again later.';
+
+  /// The title that's used for displaying 'delete' success messages.
+  String get effectiveDeleteSuccessTitle => deleteSuccessTitle ?? 'Delete success';
+
+  /// The message that's used for displaying 'delete' success messages in singular form.
+  String get effectiveDeleteSuccessSingularMessage =>
+      deleteSuccessSingularMessage ?? '${_effectiveSingularForm} has been deleted.';
+
+  /// The message that's used for displaying 'delete' success messages in plural form.
+  String get effectiveDeleteSuccessPluralMessage =>
+      deleteSuccessPluralMessage ?? '${_effectivePluralForm} have been deleted.';
+
+  /// The title that's used for displaying 'delete' failed messages.
+  String get effectiveDeleteFailedTitle => deleteFailedTitle ?? 'Delete failed';
+
+  /// The message that's used for displaying 'delete' failed messages in singular form.
+  String get effectiveDeleteFailedSingularMessage =>
+      deleteFailedSingularMessage ??
+      'Unable to delete ${_effectiveSingularForm}, please try again later.';
+
+  /// The message that's used for displaying 'delete' failed messages in plural form.
+  String get effectiveDeleteFailedPluralMessage =>
+      deleteFailedPluralMessage ??
+      'Unable to delete ${_effectivePluralForm}, please try again later.';
 }

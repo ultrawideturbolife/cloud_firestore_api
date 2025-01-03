@@ -23,9 +23,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.success(
         result: result,
-        title: _config.createSuccessTitle,
-        message:
-            isPlural ? _config.createSuccessPluralMessage : _config.createSuccessSingularMessage,
+        title: _config.effectiveCreateSuccessTitle,
+        message: isPlural
+            ? _config.effectiveCreateSuccessPluralMessage
+            : _config.effectiveCreateSuccessSingularMessage,
       );
 
   /// Creates a failed 'create' [TurboResponse].
@@ -38,8 +39,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.fail(
         error: error ?? Exception('Create operation failed'),
-        title: _config.createFailedTitle,
-        message: isPlural ? _config.createFailedPluralMessage : _config.createFailedSingularMessage,
+        title: _config.effectiveCreateFailedTitle,
+        message: isPlural
+            ? _config.effectiveCreateFailedPluralMessage
+            : _config.effectiveCreateFailedSingularMessage,
       );
 
   /// Creates a successful search [TurboResponse].
@@ -51,9 +54,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.success(
         result: result,
-        title: _config.searchSuccessTitle,
-        message:
-            isPlural ? _config.searchSuccessPluralMessage : _config.searchSuccessSingularMessage,
+        title: _config.effectiveSearchSuccessTitle,
+        message: isPlural
+            ? _config.effectiveSearchSuccessPluralMessage
+            : _config.effectiveSearchSuccessSingularMessage,
       );
 
   /// Creates a failed search [TurboResponse].
@@ -66,8 +70,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.fail(
         error: error ?? Exception('Search operation failed'),
-        title: _config.searchFailedTitle,
-        message: isPlural ? _config.searchFailedPluralMessage : _config.searchFailedSingularMessage,
+        title: _config.effectiveSearchFailedTitle,
+        message: isPlural
+            ? _config.effectiveSearchFailedPluralMessage
+            : _config.effectiveSearchFailedSingularMessage,
       );
 
   /// Creates a successful update [TurboResponse].
@@ -79,9 +85,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.success(
         result: result,
-        title: _config.updateSuccessTitle,
-        message:
-            isPlural ? _config.updateSuccessPluralMessage : _config.updateSuccessSingularMessage,
+        title: _config.effectiveUpdateSuccessTitle,
+        message: isPlural
+            ? _config.effectiveUpdateSuccessPluralMessage
+            : _config.effectiveUpdateSuccessSingularMessage,
       );
 
   /// Creates a failed update [TurboResponse].
@@ -94,8 +101,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.fail(
         error: error ?? Exception('Update operation failed'),
-        title: _config.updateFailedTitle,
-        message: isPlural ? _config.updateFailedPluralMessage : _config.updateFailedSingularMessage,
+        title: _config.effectiveUpdateFailedTitle,
+        message: isPlural
+            ? _config.effectiveUpdateFailedPluralMessage
+            : _config.effectiveUpdateFailedSingularMessage,
       );
 
   /// Creates a successful delete [TurboResponse].
@@ -106,9 +115,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.success(
         result: null,
-        title: _config.deleteSuccessTitle,
-        message:
-            isPlural ? _config.deleteSuccessPluralMessage : _config.deleteSuccessSingularMessage,
+        title: _config.effectiveDeleteSuccessTitle,
+        message: isPlural
+            ? _config.effectiveDeleteSuccessPluralMessage
+            : _config.effectiveDeleteSuccessSingularMessage,
       );
 
   /// Creates a failed delete [TurboResponse].
@@ -121,8 +131,10 @@ class TurboResponseGenerator {
   }) =>
       TurboResponse.fail(
         error: error ?? Exception('Delete operation failed'),
-        title: _config.deleteFailedTitle,
-        message: isPlural ? _config.deleteFailedPluralMessage : _config.deleteFailedSingularMessage,
+        title: _config.effectiveDeleteFailedTitle,
+        message: isPlural
+            ? _config.effectiveDeleteFailedPluralMessage
+            : _config.effectiveDeleteFailedSingularMessage,
       );
 
   /// Creates an empty success [TurboResponse].

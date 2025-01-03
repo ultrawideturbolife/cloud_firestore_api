@@ -35,7 +35,7 @@ dependencies:
     path: ../
   cupertino_icons: ^1.0.6
   firebase_core: ^2.24.2
-  turbo_response: ^0.0.1+1
+  turbo_response: ^0.2.1
 
 dev_dependencies:
   flutter_test:

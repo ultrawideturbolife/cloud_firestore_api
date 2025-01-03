@@ -26,7 +26,7 @@ void main() {
 
         expect(response, isA<TurboResponse<Map<String, dynamic>>>());
         expect(response.title, equals('Create success'));
-        expect(response.message, equals('Product has been created.'));
+        expect(response.message, equals('product has been created.'));
 
         if (response case Success(:final result)) {
           expect(result, equals(result));
@@ -78,7 +78,7 @@ void main() {
 
         expect(response, isA<TurboResponse<Map<String, dynamic>>>());
         expect(response.title, equals('Search success'));
-        expect(response.message, equals('Product was found.'));
+        expect(response.message, equals('product was found.'));
 
         if (response case Success(:final result)) {
           expect(result, equals(result));
@@ -99,7 +99,7 @@ void main() {
 
         expect(response, isA<TurboResponse<List<Map<String, dynamic>>>>());
         expect(response.title, equals('Search success'));
-        expect(response.message, equals('Products were found.'));
+        expect(response.message, equals('products were found.'));
 
         if (response case Success(:final result)) {
           expect(result, equals(results));
@@ -151,7 +151,7 @@ void main() {
 
         expect(response, isA<TurboResponse<Map<String, dynamic>>>());
         expect(response.title, equals('Update success'));
-        expect(response.message, equals('Product has been updated.'));
+        expect(response.message, equals('product has been updated.'));
 
         if (response case Success(:final result)) {
           expect(result, equals(result));
@@ -185,7 +185,7 @@ void main() {
 
         expect(response, isA<TurboResponse<void>>());
         expect(response.title, equals('Delete success'));
-        expect(response.message, equals('Product has been deleted.'));
+        expect(response.message, equals('product has been deleted.'));
 
         if (response case Success()) {
           expect(true, isTrue); // Success with void result

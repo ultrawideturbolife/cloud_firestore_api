@@ -11,34 +11,35 @@ void main() {
 
     group('default values', () {
       test('should have default create messages', () {
-        expect(config.createSuccessTitle, 'Create success');
-        expect(config.createSuccessSingularMessage, 'Item has been created.');
-        expect(config.createFailedTitle, 'Create failed');
-        expect(
-            config.createFailedSingularMessage, 'Unable to create item, please try again later.');
+        expect(config.effectiveCreateSuccessTitle, 'Create success');
+        expect(config.effectiveCreateSuccessSingularMessage, 'item has been created.');
+        expect(config.effectiveCreateFailedTitle, 'Create failed');
+        expect(config.effectiveCreateFailedSingularMessage,
+            'Unable to create item, please try again later.');
       });
 
       test('should have default search messages', () {
-        expect(config.searchSuccessTitle, 'Search success');
-        expect(config.searchSuccessSingularMessage, 'Item was found.');
-        expect(config.searchFailedTitle, 'Search failed');
-        expect(config.searchFailedSingularMessage, 'Unable to find item, please try again later.');
+        expect(config.effectiveSearchSuccessTitle, 'Search success');
+        expect(config.effectiveSearchSuccessSingularMessage, 'item was found.');
+        expect(config.effectiveSearchFailedTitle, 'Search failed');
+        expect(config.effectiveSearchFailedSingularMessage,
+            'Unable to find item, please try again later.');
       });
 
       test('should have default update messages', () {
-        expect(config.updateSuccessTitle, 'Update success');
-        expect(config.updateSuccessSingularMessage, 'Item has been updated.');
-        expect(config.updateFailedTitle, 'Update failed');
-        expect(
-            config.updateFailedSingularMessage, 'Unable to update item, please try again later.');
+        expect(config.effectiveUpdateSuccessTitle, 'Update success');
+        expect(config.effectiveUpdateSuccessSingularMessage, 'item has been updated.');
+        expect(config.effectiveUpdateFailedTitle, 'Update failed');
+        expect(config.effectiveUpdateFailedSingularMessage,
+            'Unable to update item, please try again later.');
       });
 
       test('should have default delete messages', () {
-        expect(config.deleteSuccessTitle, 'Delete success');
-        expect(config.deleteSuccessSingularMessage, 'Item has been deleted.');
-        expect(config.deleteFailedTitle, 'Delete failed');
-        expect(
-            config.deleteFailedSingularMessage, 'Unable to delete item, please try again later.');
+        expect(config.effectiveDeleteSuccessTitle, 'Delete success');
+        expect(config.effectiveDeleteSuccessSingularMessage, 'item has been deleted.');
+        expect(config.effectiveDeleteFailedTitle, 'Delete failed');
+        expect(config.effectiveDeleteFailedSingularMessage,
+            'Unable to delete item, please try again later.');
       });
     });
 
@@ -75,48 +76,48 @@ void main() {
       });
 
       test('should use custom create messages', () {
-        expect(config.createSuccessTitle, 'Created');
-        expect(config.createSuccessSingularMessage, 'Product has been created.');
-        expect(config.createSuccessPluralMessage, 'Products have been created.');
-        expect(config.createFailedTitle, 'Create Error');
-        expect(config.createFailedSingularMessage, 'Unable to create product.');
-        expect(config.createFailedPluralMessage, 'Unable to create products.');
+        expect(config.effectiveCreateSuccessTitle, 'Created');
+        expect(config.effectiveCreateSuccessSingularMessage, 'Product has been created.');
+        expect(config.effectiveCreateSuccessPluralMessage, 'Products have been created.');
+        expect(config.effectiveCreateFailedTitle, 'Create Error');
+        expect(config.effectiveCreateFailedSingularMessage, 'Unable to create product.');
+        expect(config.effectiveCreateFailedPluralMessage, 'Unable to create products.');
       });
 
       test('should use custom search messages', () {
-        expect(config.searchSuccessTitle, 'Found');
-        expect(config.searchSuccessSingularMessage, 'Product was found.');
-        expect(config.searchSuccessPluralMessage, 'Products were found.');
-        expect(config.searchFailedTitle, 'Search Error');
-        expect(config.searchFailedSingularMessage, 'Unable to find product.');
-        expect(config.searchFailedPluralMessage, 'Unable to find products.');
+        expect(config.effectiveSearchSuccessTitle, 'Found');
+        expect(config.effectiveSearchSuccessSingularMessage, 'Product was found.');
+        expect(config.effectiveSearchSuccessPluralMessage, 'Products were found.');
+        expect(config.effectiveSearchFailedTitle, 'Search Error');
+        expect(config.effectiveSearchFailedSingularMessage, 'Unable to find product.');
+        expect(config.effectiveSearchFailedPluralMessage, 'Unable to find products.');
       });
 
       test('should use custom update messages', () {
-        expect(config.updateSuccessTitle, 'Updated');
-        expect(config.updateSuccessSingularMessage, 'Product has been updated.');
-        expect(config.updateSuccessPluralMessage, 'Products have been updated.');
-        expect(config.updateFailedTitle, 'Update Error');
-        expect(config.updateFailedSingularMessage, 'Unable to update product.');
-        expect(config.updateFailedPluralMessage, 'Unable to update products.');
+        expect(config.effectiveUpdateSuccessTitle, 'Updated');
+        expect(config.effectiveUpdateSuccessSingularMessage, 'Product has been updated.');
+        expect(config.effectiveUpdateSuccessPluralMessage, 'Products have been updated.');
+        expect(config.effectiveUpdateFailedTitle, 'Update Error');
+        expect(config.effectiveUpdateFailedSingularMessage, 'Unable to update product.');
+        expect(config.effectiveUpdateFailedPluralMessage, 'Unable to update products.');
       });
 
       test('should use custom delete messages', () {
-        expect(config.deleteSuccessTitle, 'Deleted');
-        expect(config.deleteSuccessSingularMessage, 'Product has been deleted.');
-        expect(config.deleteSuccessPluralMessage, 'Products have been deleted.');
-        expect(config.deleteFailedTitle, 'Delete Error');
-        expect(config.deleteFailedSingularMessage, 'Unable to delete product.');
-        expect(config.deleteFailedPluralMessage, 'Unable to delete products.');
+        expect(config.effectiveDeleteSuccessTitle, 'Deleted');
+        expect(config.effectiveDeleteSuccessSingularMessage, 'Product has been deleted.');
+        expect(config.effectiveDeleteSuccessPluralMessage, 'Products have been deleted.');
+        expect(config.effectiveDeleteFailedTitle, 'Delete Error');
+        expect(config.effectiveDeleteFailedSingularMessage, 'Unable to delete product.');
+        expect(config.effectiveDeleteFailedPluralMessage, 'Unable to delete products.');
       });
     });
 
     group('pluralization', () {
       test('should handle default plural messages', () {
-        expect(config.createSuccessSingularMessage, 'Item has been created.');
-        expect(config.createSuccessPluralMessage, 'Items have been created.');
-        expect(config.searchSuccessSingularMessage, 'Item was found.');
-        expect(config.searchSuccessPluralMessage, 'Items were found.');
+        expect(config.effectiveCreateSuccessSingularMessage, 'item has been created.');
+        expect(config.effectiveCreateSuccessPluralMessage, 'items have been created.');
+        expect(config.effectiveSearchSuccessSingularMessage, 'item was found.');
+        expect(config.effectiveSearchSuccessPluralMessage, 'items were found.');
       });
 
       test('should handle custom plural messages', () {
@@ -125,10 +126,10 @@ void main() {
           pluralForm: 'records',
         );
 
-        expect(config.createSuccessSingularMessage, 'Record has been created.');
-        expect(config.createSuccessPluralMessage, 'Records have been created.');
-        expect(config.searchSuccessSingularMessage, 'Record was found.');
-        expect(config.searchSuccessPluralMessage, 'Records were found.');
+        expect(config.effectiveCreateSuccessSingularMessage, 'record has been created.');
+        expect(config.effectiveCreateSuccessPluralMessage, 'records have been created.');
+        expect(config.effectiveSearchSuccessSingularMessage, 'record was found.');
+        expect(config.effectiveSearchSuccessPluralMessage, 'records were found.');
       });
     });
 
@@ -139,15 +140,15 @@ void main() {
           pluralForm: '',
         );
 
-        expect(config.createSuccessSingularMessage, 'Item has been created.');
-        expect(config.createSuccessPluralMessage, 'Items have been created.');
+        expect(config.effectiveCreateSuccessSingularMessage, 'item has been created.');
+        expect(config.effectiveCreateSuccessPluralMessage, 'items have been created.');
       });
 
       test('should handle null singular/plural forms', () {
         const config = TurboConfig();
 
-        expect(config.createSuccessSingularMessage, 'Item has been created.');
-        expect(config.createSuccessPluralMessage, 'Items have been created.');
+        expect(config.effectiveCreateSuccessSingularMessage, 'item has been created.');
+        expect(config.effectiveCreateSuccessPluralMessage, 'items have been created.');
       });
     });
   });
