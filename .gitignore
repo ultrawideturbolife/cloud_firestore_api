@@ -32,3 +32,6 @@ build/
 
 # GPT related
 gpt_agent_todo.md
+
+# Synced documentation
+docs/

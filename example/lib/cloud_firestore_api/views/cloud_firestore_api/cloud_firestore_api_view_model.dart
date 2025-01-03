@@ -13,10 +13,5 @@ class CloudFirestoreApiViewModel extends BaseViewModel {
     super.initialise();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   static CloudFirestoreApiViewModel get locate => CloudFirestoreApiViewModel();
 }
